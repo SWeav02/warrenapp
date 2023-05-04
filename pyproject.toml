@@ -20,5 +20,12 @@ build-backend= "setuptools.build_meta"
 [project]
 name = "warrenapp"
 version = "0.1.0"
+description = "An app designed to add warren lab settings and workflows to Simmate"
 dependencies = ["simmate"]
 requires-python=">=3.10"
+authors = [{ name = "Sam Weaver", email = "sweav@unc.edu" }]
+license = { file = "LICENSE" }
+
+[project.urls]
+Homepage = "https://github.com/SWeav02/warrenapp"
+
