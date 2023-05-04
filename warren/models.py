@@ -3,10 +3,10 @@
 from pathlib import Path
 
 from pandas import DataFrame
-
 from simmate.apps.bader.outputs import ACF
-from warren.badelf_tools.utilities import get_electride_num
 from simmate.database.base_data_types import StaticEnergy, table_column
+
+from warren.badelf_tools.utilities import get_electride_num
 
 
 class WarrenPopulationAnalysis(StaticEnergy):
@@ -149,4 +149,4 @@ class WarrenPopulationAnalysis(StaticEnergy):
     def write_summary_dataframe(self, directory: Path):
         df = self.get_summary_dataframe()
         filename = directory / "simmate_population_summary.csv"
-        df.to_csv(filename)
+        df.to_csv(filename, index=False)

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.population_analysis.badelf_hse import (
-    StaticEnergy__Warren__PrebadelfHse,
-)
-from warren.workflows.population_analysis.base import (
-    VaspBaderBase,
-    prebader_incar_settings,
-)
+from warren.workflows.population_analysis.badelf_hse import \
+    StaticEnergy__Warren__PrebadelfHse
+from warren.workflows.population_analysis.base import (VaspBaderBase,
+                                                       prebader_incar_settings)
 from warren.workflows.static_energy.hse import StaticEnergy__Warren__Hse
 
 

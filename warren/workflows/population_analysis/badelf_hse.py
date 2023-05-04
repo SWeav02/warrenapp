@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from warren.workflows.population_analysis.base import (
-    VaspBadElfBase,
-    prebadelf_incar_settings,
-)
+    VaspBadElfBase, prebadelf_incar_settings)
 from warren.workflows.static_energy.hse import StaticEnergy__Warren__Hse
 
 

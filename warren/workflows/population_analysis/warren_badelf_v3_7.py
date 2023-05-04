@@ -17,21 +17,14 @@ import pandas
 import pandas as pd
 import psutil
 from dask.distributed import Client, LocalCluster
-
-from warren.badelf_tools.badelf_algorithm_functions import (
-    get_charge,
-    get_electride_sites,
-    get_grid,
-    get_lattice,
-    get_partitioning,
-    get_real_from_frac,
-    get_voronoi_neighbors,
-    get_voxels_site_dask,
-    get_voxels_site_garbage_dask,
-)
-from warren.models import WarrenPopulationAnalysis
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
+
+from warren.badelf_tools.badelf_algorithm_functions import (
+    get_charge, get_electride_sites, get_grid, get_lattice, get_partitioning,
+    get_real_from_frac, get_voronoi_neighbors, get_voxels_site_dask,
+    get_voxels_site_garbage_dask)
+from warren.models import WarrenPopulationAnalysis
 
 ###############################################################################
 # Now that we have functions defined, it's time to define the main workflow
@@ -39,10 +32,9 @@ from simmate.toolkit import Structure
 
 
 class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
-
     description_doc_short = "BadELF based on ionic radii"
 
-    use_database = WarrenPopulationAnalysis
+    database_table = WarrenPopulationAnalysis
 
     @classmethod
     def run_config(
@@ -54,7 +46,6 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         charge_file: str = "CHGCAR",
         **kwargs,
     ):
-
         structure = Structure.from_file(directory / structure_file)
         # get dictionary of sites and closest neighbors. This always throws
         # the same warning about He's EN so we suppress that here
@@ -205,7 +196,6 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 memory_limit="auto",
                 processes=True,
             ) as cluster, Client(cluster) as client:
-
                 # put list of indices in dask dataframe. Partition with the same
                 # number of partitions as workers
                 ddf = dd.from_pandas(

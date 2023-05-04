@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.relaxation.pbe_metal import (
-    Relaxation__Warren__PbeMetal,
-)
+from warren.workflows.relaxation.pbe_metal import Relaxation__Warren__PbeMetal
 from warren.workflows.static_energy.pbe import static_settings
 
 

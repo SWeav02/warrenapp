@@ -14,7 +14,6 @@ import numpy as np
 from pymatgen.analysis.local_env import CrystalNN, VoronoiNN
 from scipy.interpolate import RegularGridInterpolator
 from scipy.signal import savgol_filter
-
 from simmate.toolkit import Structure
 
 ##########################################################################
@@ -137,7 +136,6 @@ def get_line(site_pos, neigh_pos, grid):
     position = site_pos
     line = [position]
     for i in range(steps):
-
         # move position by slope_increment
         position = [float(a + b) for a, b in zip(position, slope_increment)]
 

@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.population_analysis.base import (
-    VaspBaderBadElfBase,
-    prebadelf_incar_settings,
-)
-from warren.workflows.static_energy import StaticEnergy__Warren__Hse
 from simmate.engine.workflow import Workflow
+
+from warren.workflows.population_analysis.base import (
+    VaspBaderBadElfBase, prebadelf_incar_settings)
+from warren.workflows.static_energy import StaticEnergy__Warren__Hse
 
 
 class StaticEnergy__Warren__PrebaderbadelfHse(StaticEnergy__Warren__Hse):

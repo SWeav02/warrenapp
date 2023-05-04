@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.static_energy.hse import StaticEnergy__Warren__Hse
 from simmate.database.workflow_results import StaticEnergy
+
+from warren.workflows.static_energy.hse import StaticEnergy__Warren__Hse
 
 
 class PopulationAnalysis__Warren__ElfHse(StaticEnergy__Warren__Hse):

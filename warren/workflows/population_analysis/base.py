@@ -3,17 +3,16 @@
 import shutil
 from pathlib import Path
 
-from simmate.apps.bader.workflows import PopulationAnalysis__Bader__CombineChgcars
-from warren.badelf_tools.utilities import (
-    check_required_files,
-    get_density_file_empty,
-)
-from warren.workflows.population_analysis.warren_badelf_v3_7 import (
-    PopulationAnalysis__Warren__BadelfIonicRadii,
-)
-from warren.models import WarrenPopulationAnalysis
+from simmate.apps.bader.workflows import \
+    PopulationAnalysis__Bader__CombineChgcars
 from simmate.engine import S3Workflow, Workflow
 from simmate.toolkit import Structure
+
+from warren.badelf_tools.utilities import (check_required_files,
+                                           get_density_file_empty)
+from warren.models import WarrenPopulationAnalysis
+from warren.workflows.population_analysis.warren_badelf_v3_7 import \
+    PopulationAnalysis__Warren__BadelfIonicRadii
 
 # This file contains classes for performing Bader and BadELF using the Henkelman
 # groups algorithm (http://theory.cm.utexas.edu/henkelman/code/bader/).
@@ -28,7 +27,7 @@ from simmate.toolkit import Structure
 # Workflow for running a single bader analysis.
 class PopulationAnalysis__Warren__Bader(S3Workflow):
     required_files = ["CHGCAR_sum", "CHGCAR"]
-    use_database = WarrenPopulationAnalysis
+    database_table = WarrenPopulationAnalysis
 
     command = "bader CHGCAR -ref CHGCAR_sum -b weight > bader.out"
     # The command to call the executable, which is typically bader. Note we
@@ -57,7 +56,7 @@ class PopulationAnalysis__Warren__BaderEmpty(S3Workflow):
     """
 
     required_files = ["CHGCAR_sum_empty", "CHGCAR_empty"]
-    use_database = WarrenPopulationAnalysis
+    database_table = WarrenPopulationAnalysis
     command = "bader CHGCAR_empty -ref CHGCAR_sum_empty > bader.out"
 
     @staticmethod
@@ -227,8 +226,7 @@ class VaspBadElfBase(Workflow):
             # Find electride sites, place empty atoms, and generate chgcar
             # like files for each atomic site
             PopulationAnalysis__Warren__GetAtomChgcar.run(
-                directory=prebadelf_result.directory,
-                analysis_type="badelf"
+                directory=prebadelf_result.directory, analysis_type="badelf"
             )
             # Run Warren lab version of BadELF algorithm
             PopulationAnalysis__Warren__BadelfIonicRadii.run(
@@ -305,8 +303,7 @@ class VaspBaderBadElfBase(Workflow):
             # Find electride sites, place empty atoms, and get atom charges
             # in CHGCAR format
             PopulationAnalysis__Warren__GetAtomChgcar.run(
-                directory=directory,
-                analysis_type="both"
+                directory=directory, analysis_type="both"
             ).result()
             # Run Warren lab BadELF algorithm
             PopulationAnalysis__Warren__BadelfIonicRadii.run(directory=directory)
