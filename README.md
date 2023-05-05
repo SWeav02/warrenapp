@@ -1,7 +1,7 @@
 <!-- This displays entry text -->
 <h1><p align="center">
 Welcome to the Warren Lab's extension app for
-</h1></p></font>
+</h1></p>
 <!-- This displays the Simmate Logo -->
 <p align="center" href=https://github.com/jacksund/simmate>
    <img src="https://github.com/jacksund/simmate/blob/main/src/simmate/website/static_files/images/simmate-logo-dark.svg?raw=true" width="300" style="max-width: 700px;">
@@ -21,11 +21,11 @@ conda create -n my_env -c conda-forge python=3.10 simmate
 conda activate my_env
 simmate database reset
 ```
-2. Install the simmate_warren_app using pip
+2. Install the warrenapp using pip
 ``` shell
 pip install warrenapp
 ```
-3. Register the warrenapp with simmate by adding `warren.apps.SimmateWarrenConfig` to ~/Home/simmate/my_env-apps.yaml
+3. Register the warrenapp with simmate by adding `- warrenapp.apps.SimmateWarrenConfig` to ~/Home/simmate/my_env-apps.yaml
 4. Update your database to include custom tables from the warrenapp
 ``` shell
 simmate database update

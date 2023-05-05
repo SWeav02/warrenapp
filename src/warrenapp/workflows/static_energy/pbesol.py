@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.relaxation.pbesol import Relaxation__Warren__Pbesol
-from warren.workflows.static_energy.pbe import static_settings
+from warrenapp.workflows.relaxation.pbesol import Relaxation__Warren__Pbesol
+from warrenapp.workflows.static_energy.pbe import static_settings
 
 
 class StaticEnergy__Warren__Pbesol(Relaxation__Warren__Pbesol):

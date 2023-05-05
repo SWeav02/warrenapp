@@ -5,10 +5,18 @@ import numpy as np
 from pymatgen.io.vasp.inputs import Poscar
 from simmate.toolkit import Structure
 
-from warren.badelf_tools.badelf_algorithm_functions import (
-    get_closest_neighbors, get_grid, get_lattice, get_line,
-    get_position_from_min, get_real_from_vox, local_min, savgol_filter,
-    voxel_from_frac, voxel_from_neigh)
+from warrenapp.badelf_tools.badelf_algorithm_functions import (
+    get_closest_neighbors,
+    get_grid,
+    get_lattice,
+    get_line,
+    get_position_from_min,
+    get_real_from_vox,
+    local_min,
+    savgol_filter,
+    voxel_from_frac,
+    voxel_from_neigh,
+)
 
 
 def check_required_files(directory: Path, required_files: list):

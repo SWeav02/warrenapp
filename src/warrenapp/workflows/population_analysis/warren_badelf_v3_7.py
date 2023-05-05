@@ -20,11 +20,18 @@ from dask.distributed import Client, LocalCluster
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
-from warren.badelf_tools.badelf_algorithm_functions import (
-    get_charge, get_electride_sites, get_grid, get_lattice, get_partitioning,
-    get_real_from_frac, get_voronoi_neighbors, get_voxels_site_dask,
-    get_voxels_site_garbage_dask)
-from warren.models import WarrenPopulationAnalysis
+from warrenapp.badelf_tools.badelf_algorithm_functions import (
+    get_charge,
+    get_electride_sites,
+    get_grid,
+    get_lattice,
+    get_partitioning,
+    get_real_from_frac,
+    get_voronoi_neighbors,
+    get_voxels_site_dask,
+    get_voxels_site_garbage_dask,
+)
+from warrenapp.models import WarrenPopulationAnalysis
 
 ###############################################################################
 # Now that we have functions defined, it's time to define the main workflow

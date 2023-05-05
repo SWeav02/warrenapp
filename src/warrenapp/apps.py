@@ -11,4 +11,4 @@ from django.apps import AppConfig
 
 
 class SimmateWarrenConfig(AppConfig):
-    name = "warren"
+    name = "warrenapp"

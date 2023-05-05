@@ -20,8 +20,9 @@ build-backend= "setuptools.build_meta"
 [project]
 name = "warrenapp"
 version = "0.1.0"
-description = "An app designed to add warren lab settings and workflows to Simmate"
 dependencies = ["simmate"]
+description = "The Warrenapp is an extension of the Simulated Materials Ecosystem (Simmate), a package designed to ease computational materials research. The WarrenApp adds several custom workflows and settings."
+readme = "README.md"
 requires-python=">=3.10"
 authors = [{ name = "Sam Weaver", email = "sweav@unc.edu" }]
 license = { file = "LICENSE" }
@@ -29,3 +30,5 @@ license = { file = "LICENSE" }
 [project.urls]
 Homepage = "https://github.com/SWeav02/warrenapp"
 
+[tool.isort]
+profile = "black"

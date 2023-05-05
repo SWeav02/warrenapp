@@ -3,9 +3,11 @@
 
 from simmate.engine.workflow import Workflow
 
-from warren.workflows.population_analysis.base import (
-    VaspBaderBadElfBase, prebadelf_incar_settings)
-from warren.workflows.static_energy.pbe import StaticEnergy__Warren__Pbe
+from warrenapp.workflows.population_analysis.base import (
+    VaspBaderBadElfBase,
+    prebadelf_incar_settings,
+)
+from warrenapp.workflows.static_energy.pbe import StaticEnergy__Warren__Pbe
 
 
 class StaticEnergy__Warren__PrebaderbadelfPbe(StaticEnergy__Warren__Pbe):

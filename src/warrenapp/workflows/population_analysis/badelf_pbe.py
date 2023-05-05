@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.population_analysis.base import (
-    VaspBadElfBase, prebadelf_incar_settings)
-from warren.workflows.static_energy.pbe import StaticEnergy__Warren__Pbe
+from warrenapp.workflows.population_analysis.base import (
+    VaspBadElfBase,
+    prebadelf_incar_settings,
+)
+from warrenapp.workflows.static_energy.pbe import StaticEnergy__Warren__Pbe
 
 
 class StaticEnergy__Warren__PrebadelfPbe(StaticEnergy__Warren__Pbe):

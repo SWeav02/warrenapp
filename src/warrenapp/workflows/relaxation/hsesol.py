@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from warren.workflows.relaxation.hse import Relaxation__Warren__Hse
+from warrenapp.workflows.relaxation.hse import Relaxation__Warren__Hse
 
 
 class Relaxation__Warren__Hsesol(Relaxation__Warren__Hse):
