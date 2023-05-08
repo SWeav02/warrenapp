@@ -4,6 +4,7 @@ from warrenapp.workflows.population_analysis.base import (
     VaspBadElfBase,
     prebadelf_incar_settings,
 )
+from warrenapp.workflows.static_energy import StaticEnergy__Warren__SeededHse
 from warrenapp.workflows.static_energy.hse import StaticEnergy__Warren__Hse
 
 
@@ -24,6 +25,12 @@ class StaticEnergy__Warren__PrebadelfHse(StaticEnergy__Warren__Hse):
     incar.update(prebadelf_incar_settings)
 
 
+# We prefer to use a workflow that seeds the HSE calculation with a PBE calculation
+class StaticEnergy__Warren__PrebadelfSeededHse(StaticEnergy__Warren__SeededHse):
+
+    second_calculation = StaticEnergy__Warren__PrebadelfHse
+
+
 class PopulationAnalysis__Warren__BadelfHse(VaspBadElfBase):
     """
     Runs a static energy calculation using an extra-fine FFT grid and then
@@ -32,4 +39,4 @@ class PopulationAnalysis__Warren__BadelfHse(VaspBadElfBase):
     the Warren Lab.
     """
 
-    static_energy_prebadelf = StaticEnergy__Warren__PrebadelfHse
+    static_energy_prebadelf = StaticEnergy__Warren__PrebadelfSeededHse

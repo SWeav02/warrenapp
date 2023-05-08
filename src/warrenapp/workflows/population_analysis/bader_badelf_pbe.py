@@ -26,8 +26,6 @@ class StaticEnergy__Warren__PrebaderbadelfPbe(StaticEnergy__Warren__Pbe):
     incar.update(prebadelf_incar_settings)
 
 
-# !!!I would like to move most of this to the base file because that's where
-# similar code is currently.!!!
 class PopulationAnalysis__Warren__BaderBadelfPbe(VaspBaderBadElfBase):
     """
     Runs a static energy calculation using an extra-fine FFT grid using vasp

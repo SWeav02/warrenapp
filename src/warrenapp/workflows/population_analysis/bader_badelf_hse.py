@@ -6,13 +6,16 @@ from warrenapp.workflows.population_analysis.base import (
     VaspBaderBadElfBase,
     prebadelf_incar_settings,
 )
-from warrenapp.workflows.static_energy import StaticEnergy__Warren__Hse
+from warrenapp.workflows.static_energy import (
+    StaticEnergy__Warren__Hse,
+    StaticEnergy__Warren__SeededHse,
+)
 
 
 class StaticEnergy__Warren__PrebaderbadelfHse(StaticEnergy__Warren__Hse):
     """
     Runs a static energy calculation with a high-density FFT grid under HSE
-    settings from the Warren Lab. Results can be used for BadLEF analysis.
+    settings from the Warren Lab. Results can be used for BadELF analysis.
 
     We do NOT recommend running this calculation on its own. Instead, you should
     use the full workflow, which runs this calculation AND the following bader
@@ -25,6 +28,13 @@ class StaticEnergy__Warren__PrebaderbadelfHse(StaticEnergy__Warren__Hse):
     incar.update(prebadelf_incar_settings)
 
 
+# We prefer to use a workflow that seeds the HSE calculation with a PBE calculation.
+# This is inherited from our static energy seeded_hse workflow.
+class StaticEnergy__Warren__PrebaderbadelfSeededHse(StaticEnergy__Warren__SeededHse):
+
+    second_calculation = StaticEnergy__Warren__PrebaderbadelfHse
+
+
 class PopulationAnalysis__Warren__BaderBadelfHse(VaspBaderBadElfBase):
     """
     Runs a static energy calculation using an extra-fine FFT grid using vasp
@@ -32,4 +42,4 @@ class PopulationAnalysis__Warren__BaderBadelfHse(VaspBaderBadElfBase):
     Uses the Warren lab settings HSE settings.
     """
 
-    static_energy_prebadelf: Workflow = StaticEnergy__Warren__PrebaderbadelfHse
+    static_energy_prebadelf: Workflow = StaticEnergy__Warren__PrebaderbadelfSeededHse
