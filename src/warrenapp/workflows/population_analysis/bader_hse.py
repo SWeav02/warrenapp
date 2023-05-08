@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from warrenapp.workflows.population_analysis.bader_pbe import (
+    StaticEnergy__Warren__PrebaderPbe,
+)
 from warrenapp.workflows.population_analysis.base import (
     VaspBaderBase,
     prebader_incar_settings,
@@ -27,7 +30,7 @@ class StaticEnergy__Warren__PrebaderHse(StaticEnergy__Warren__Hse):
 # We prefer to use a workflow that seeds the HSE calculation with a PBE calculation.
 # This is inherited from our static energy seeded_hse workflow.
 class StaticEnergy__Warren__PrebaderSeededHse(StaticEnergy__Warren__SeededHse):
-
+    initial_calculation = StaticEnergy__Warren__PrebaderPbe
     second_calculation = StaticEnergy__Warren__PrebaderHse
 
 

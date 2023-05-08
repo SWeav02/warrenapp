@@ -2,6 +2,9 @@
 
 from simmate.engine.workflow import Workflow
 
+from warrenapp.workflows.population_analysis.badelf_pbe import (
+    StaticEnergy__Warren__PrebadelfPbe,
+)
 from warrenapp.workflows.population_analysis.base import (
     VaspBaderBadElfBase,
     prebadelf_incar_settings,
@@ -31,7 +34,7 @@ class StaticEnergy__Warren__PrebaderbadelfHse(StaticEnergy__Warren__Hse):
 # We prefer to use a workflow that seeds the HSE calculation with a PBE calculation.
 # This is inherited from our static energy seeded_hse workflow.
 class StaticEnergy__Warren__PrebaderbadelfSeededHse(StaticEnergy__Warren__SeededHse):
-
+    initial_calculation = StaticEnergy__Warren__PrebadelfPbe
     second_calculation = StaticEnergy__Warren__PrebaderbadelfHse
 
 

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from warrenapp.workflows.population_analysis.badelf_pbe import (
+    StaticEnergy__Warren__PrebadelfPbe,
+)
 from warrenapp.workflows.population_analysis.base import (
     VaspBadElfBase,
     prebadelf_incar_settings,
@@ -27,7 +30,7 @@ class StaticEnergy__Warren__PrebadelfHse(StaticEnergy__Warren__Hse):
 
 # We prefer to use a workflow that seeds the HSE calculation with a PBE calculation
 class StaticEnergy__Warren__PrebadelfSeededHse(StaticEnergy__Warren__SeededHse):
-
+    initial_calculation = StaticEnergy__Warren__PrebadelfPbe
     second_calculation = StaticEnergy__Warren__PrebadelfHse
 
 
