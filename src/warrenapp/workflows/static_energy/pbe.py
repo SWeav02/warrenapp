@@ -9,7 +9,7 @@ static_settings = dict(
     LCHARG=True,
     LORBIT=11,
     LVHAR=True,
-    LWAVE=False,
+    LWAVE=True,
     ALGO="Normal",  # was "Fast" before
 )
 # These settings are saved here to make it easier to add them to other static

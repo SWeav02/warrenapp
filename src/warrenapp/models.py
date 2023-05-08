@@ -3,9 +3,9 @@
 from pathlib import Path
 
 from pandas import DataFrame
-from simmate.apps.bader.outputs import ACF
 from simmate.database.base_data_types import StaticEnergy, table_column
 
+from warrenapp.badelf_tools.acf import ACF
 from warrenapp.badelf_tools.utilities import get_electride_num
 
 

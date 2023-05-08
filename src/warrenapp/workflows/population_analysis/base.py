@@ -141,7 +141,7 @@ class VaspBaderBase(Workflow):
         structure: Structure,
         command: str = None,
         source: dict = None,
-        find_empties: bool = False,
+        find_empties: bool = True,
         directory: Path = None,
         **kwargs,
     ):

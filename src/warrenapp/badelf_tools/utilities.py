@@ -293,7 +293,6 @@ def write_density_file_empty(
     for density_file in density_files:
         # Open CHGCAR or ELFCAR and add all of the lines past the structure info
         # to a list.
-        print("hi")
         file = open(directory / f"{density_file}", "r")
         early_lines_to_keep = []
         later_lines_to_keep = []
