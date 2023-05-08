@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from .badelf_hse import (
+from .badelf_hse import (  # StaticEnergy__Warren__PrebadelfSeededHse,
     PopulationAnalysis__Warren__BadelfHse,
     StaticEnergy__Warren__PrebadelfHse,
-    StaticEnergy__Warren__PrebadelfSeededHse,
 )
 from .badelf_pbe import (
     PopulationAnalysis__Warren__BadelfPbe,
     StaticEnergy__Warren__PrebadelfPbe,
 )
-from .bader_badelf_hse import (
+from .bader_badelf_hse import (  # StaticEnergy__Warren__PrebaderbadelfSeededHse,
     PopulationAnalysis__Warren__BaderBadelfHse,
     StaticEnergy__Warren__PrebaderbadelfHse,
-    StaticEnergy__Warren__PrebaderbadelfSeededHse,
 )
 from .bader_badelf_pbe import (
     PopulationAnalysis__Warren__BaderBadelfPbe,
@@ -24,10 +22,9 @@ from .bader_badelf_relaxation_hse import (
 from .bader_badelf_relaxation_pbe import (
     PopulationAnalysis__Warren__BaderBadelfRelaxationPbe,
 )
-from .bader_hse import (
+from .bader_hse import (  # StaticEnergy__Warren__PrebaderSeededHse,
     PopulationAnalysis__Warren__BaderHse,
     StaticEnergy__Warren__PrebaderHse,
-    StaticEnergy__Warren__PrebaderSeededHse,
 )
 from .bader_pbe import (
     PopulationAnalysis__Warren__BaderPbe,

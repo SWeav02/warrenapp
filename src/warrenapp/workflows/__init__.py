@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .population_analysis import (
+from .population_analysis import (  # StaticEnergy__Warren__PrebadelfSeededHse,; StaticEnergy__Warren__PrebaderbadelfSeededHse,; StaticEnergy__Warren__PrebaderSeededHse,
     PopulationAnalysis__Warren__BadelfHse,
     PopulationAnalysis__Warren__BadelfPbe,
     PopulationAnalysis__Warren__BaderBadelfHse,
@@ -13,13 +13,10 @@ from .population_analysis import (
     PopulationAnalysis__Warren__ElfPbe,
     StaticEnergy__Warren__PrebadelfHse,
     StaticEnergy__Warren__PrebadelfPbe,
-    StaticEnergy__Warren__PrebadelfSeededHse,
     StaticEnergy__Warren__PrebaderbadelfHse,
     StaticEnergy__Warren__PrebaderbadelfPbe,
-    StaticEnergy__Warren__PrebaderbadelfSeededHse,
     StaticEnergy__Warren__PrebaderHse,
     StaticEnergy__Warren__PrebaderPbe,
-    StaticEnergy__Warren__PrebaderSeededHse,
 )
 from .relaxation import (
     Relaxation__Warren__Hse,
