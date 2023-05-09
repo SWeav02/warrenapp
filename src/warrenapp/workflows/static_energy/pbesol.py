@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from warrenapp.workflows.relaxation.pbesol import Relaxation__Warren__Pbesol
-from warrenapp.workflows.static_energy.pbe import static_settings
+from warrenapp.workflows.static_energy.pbe import pbe_static_settings
 
 
 class StaticEnergy__Warren__Pbesol(Relaxation__Warren__Pbesol):
@@ -13,4 +13,4 @@ class StaticEnergy__Warren__Pbesol(Relaxation__Warren__Pbesol):
     """
 
     incar = Relaxation__Warren__Pbesol.incar.copy()
-    incar.update(static_settings)
+    incar.update(pbe_static_settings)

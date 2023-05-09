@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from warrenapp.workflows.relaxation.scan import Relaxation__Warren__Scan
-from warrenapp.workflows.static_energy.pbe import static_settings
+from warrenapp.workflows.static_energy.hse import hse_static_settings
 
 
 class StaticEnergy__Warren__Scan(Relaxation__Warren__Scan):
@@ -11,4 +11,4 @@ class StaticEnergy__Warren__Scan(Relaxation__Warren__Scan):
     """
 
     incar = Relaxation__Warren__Scan.incar.copy()
-    incar.update(static_settings)
+    incar.update(hse_static_settings)
