@@ -122,7 +122,7 @@ def get_max_radius(structure: Structure, partition_file: str):
 def get_empties_from_bcf(
     directory: Path,
     structure: Structure,
-    min_charge: float = 0.1,
+    min_charge: float = 0.15,
 ):
     """
     Checks the BCF.dat output file from the Henkelman algorithm for charge
@@ -328,6 +328,7 @@ def write_density_file_empty(
 def get_density_file_empty(
     directory: Path,
     structure: Structure,
+    min_charge: float = 0.15,
     analysis_type: str = "badelf",
 ):
     """
@@ -340,6 +341,7 @@ def get_density_file_empty(
     structure_empty = get_empties_from_bcf(
         directory=directory,
         structure=structure,
+        min_charge=min_charge,
     )
 
     # Write the structure to a POSCAR_empty file. This must be in a specific format.

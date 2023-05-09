@@ -62,7 +62,7 @@ class PopulationAnalysis__Warren__BaderEmpty(S3Workflow):
     command = "bader CHGCAR_empty -ref CHGCAR_sum_empty > bader.out"
 
     @staticmethod
-    def setup(directory, **kwargs):
+    def setup(directory, analysis_type="bader", min_charge=1.5, **kwargs):
         required_files = ["CHGCAR_sum_empty", "CHGCAR_empty", "POSCAR"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
@@ -72,7 +72,10 @@ class PopulationAnalysis__Warren__BaderEmpty(S3Workflow):
             check_required_files(directory=directory, required_files=required_files)
         except:
             get_density_file_empty(
-                directory=directory, structure=structure, analysis_type="bader"
+                directory=directory, 
+                structure=structure, 
+                analysis_type=analysis_type,
+                min_charge=min_charge,
             )
 
 
@@ -106,7 +109,7 @@ class PopulationAnalysis__Warren__GetAtomChgcar(S3Workflow):
     command = "bader CHGCAR_empty -ref ELFCAR_empty -p all_atom > bader.out"
 
     @staticmethod
-    def setup(directory, analysis_type, **kwargs):
+    def setup(directory, analysis_type="bader", min_charge=1.5, **kwargs):
         required_files = ["CHGCAR_empty", "ELFCAR_empty"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
@@ -116,7 +119,10 @@ class PopulationAnalysis__Warren__GetAtomChgcar(S3Workflow):
             check_required_files(directory=directory, required_files=required_files)
         except:
             get_density_file_empty(
-                directory=directory, structure=structure, analysis_type=analysis_type
+                directory=directory, 
+                structure=structure, 
+                analysis_type=analysis_type,
+                min_charge=min_charge,
             )
 
 
