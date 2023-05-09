@@ -28,6 +28,7 @@ class BaderBadelfRelaxationBase(Workflow):
         source: dict = None,
         find_empties: bool = True,
         directory: Path = None,
+        min_charge: float = 0.15,
         **kwargs,
     ):
         # run a relaxation at PBE quality
@@ -56,4 +57,5 @@ class BaderBadelfRelaxationBase(Workflow):
             source=source,
             find_empties=find_empties,
             directory=static_energy_directory,
+            min_charge=min_charge,
         ).result()

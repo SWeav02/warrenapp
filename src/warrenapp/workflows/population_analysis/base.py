@@ -62,7 +62,7 @@ class PopulationAnalysis__Warren__BaderEmpty(S3Workflow):
     command = "bader CHGCAR_empty -ref CHGCAR_sum_empty > bader.out"
 
     @staticmethod
-    def setup(directory, analysis_type="bader", min_charge=0.15, **kwargs):
+    def setup(directory, min_charge, analysis_type="bader", **kwargs):
         required_files = ["CHGCAR_sum_empty", "CHGCAR_empty", "POSCAR"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
@@ -109,7 +109,7 @@ class PopulationAnalysis__Warren__GetAtomChgcar(S3Workflow):
     command = "bader CHGCAR_empty -ref ELFCAR_empty -p all_atom > bader.out"
 
     @staticmethod
-    def setup(directory, analysis_type="bader", min_charge=0.15, **kwargs):
+    def setup(directory, min_charge, analysis_type="bader", **kwargs):
         required_files = ["CHGCAR_empty", "ELFCAR_empty"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
