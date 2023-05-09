@@ -62,7 +62,7 @@ class PopulationAnalysis__Warren__BaderEmpty(S3Workflow):
     command = "bader CHGCAR_empty -ref CHGCAR_sum_empty > bader.out"
 
     @staticmethod
-    def setup(directory, analysis_type="bader", min_charge=1.5, **kwargs):
+    def setup(directory, analysis_type="bader", min_charge=0.15, **kwargs):
         required_files = ["CHGCAR_sum_empty", "CHGCAR_empty", "POSCAR"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
@@ -109,7 +109,7 @@ class PopulationAnalysis__Warren__GetAtomChgcar(S3Workflow):
     command = "bader CHGCAR_empty -ref ELFCAR_empty -p all_atom > bader.out"
 
     @staticmethod
-    def setup(directory, analysis_type="bader", min_charge=1.5, **kwargs):
+    def setup(directory, analysis_type="bader", min_charge=0.15, **kwargs):
         required_files = ["CHGCAR_empty", "ELFCAR_empty"]
         # Set the structure for this run
         structure = Structure.from_file(directory / "POSCAR")
@@ -149,6 +149,7 @@ class VaspBaderBase(Workflow):
         source: dict = None,
         find_empties: bool = True,
         directory: Path = None,
+        min_charge: float = 0.15,
         **kwargs,
     ):
         if find_empties:
@@ -170,7 +171,9 @@ class VaspBaderBase(Workflow):
             ).result()
             # Find electride sites, place empty atoms, and run bader
             PopulationAnalysis__Warren__BaderEmpty.run(
-                structure=structure, directory=prebader_result.directory
+                structure=structure, 
+                directory=prebader_result.directory,
+                min_charge=min_charge,
             )
 
         else:
@@ -216,6 +219,7 @@ class VaspBadElfBase(Workflow):
         source: dict = None,
         find_empties: bool = False,
         directory: Path = None,
+        min_charge: float = 0.15,
         **kwargs,
     ):
         if find_empties:
@@ -234,7 +238,9 @@ class VaspBadElfBase(Workflow):
             # Find electride sites, place empty atoms, and generate chgcar
             # like files for each atomic site
             PopulationAnalysis__Warren__GetAtomChgcar.run(
-                directory=prebadelf_result.directory, analysis_type="badelf"
+                directory=prebadelf_result.directory, 
+                analysis_type="badelf",
+                min_charge=min_charge,
             )
             # Run Warren lab version of BadELF algorithm
             PopulationAnalysis__Warren__BadelfIonicRadii.run(
@@ -281,6 +287,7 @@ class VaspBaderBadElfBase(Workflow):
         source: dict = None,
         find_empties: bool = False,
         directory: Path = None,
+        min_charge: float = 0.15,
         **kwargs,
     ):
         # Define files that will be copied into badelf and bader subdirectories
@@ -311,7 +318,9 @@ class VaspBaderBadElfBase(Workflow):
             # Find electride sites, place empty atoms, and get atom charges
             # in CHGCAR format
             PopulationAnalysis__Warren__GetAtomChgcar.run(
-                directory=directory, analysis_type="both"
+                directory=directory, 
+                analysis_type="both",
+                min_charge=min_charge,
             ).result()
             # Run Warren lab BadELF algorithm
             PopulationAnalysis__Warren__BadelfIonicRadii.run(directory=directory)
@@ -327,7 +336,9 @@ class VaspBaderBadElfBase(Workflow):
             # )
             # Run bader analysis
             PopulationAnalysis__Warren__BaderEmpty.run(
-                structure=structure, directory=directory
+                structure=structure, 
+                directory=directory,
+                min_charge=min_charge,
             ).result()
             # Copy bader results into bader
             for file in bader_files:
