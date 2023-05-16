@@ -6,19 +6,20 @@ from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
 
-class BaderBadelfRelaxationBase(Workflow):
+class RelaxationStaticBase(Workflow):
     """
-    Base class for running a PBE quality relaxation followed by a static energy
-    and bader or badelf analysis.
+    Base class for running a relaxation followed by a static energy
+    calculation.
 
     This should NOT be run on its own. It is meant to be inherited from in
     other workflows.
     """
 
-    # We don't need to save anything from this parent workflow
+    # We don't want to save anything from the parent workflow, only the
+    # sub workflows (relaxation and static energy) so we set use_database=False
     use_database = False
     relaxation_workflow = None  # This will be defined in inheriting workflows
-    population_analysis_workflow = None  # This will be defined in inheriting workflows
+    static_energy_workflow = None  # This will be defined in inheriting workflows
 
     @classmethod
     def run_config(
@@ -26,9 +27,7 @@ class BaderBadelfRelaxationBase(Workflow):
         structure: Structure,
         command: str = None,
         source: dict = None,
-        find_empties: bool = True,
         directory: Path = None,
-        min_charge: float = 0.15,
         **kwargs,
     ):
         # run a relaxation at PBE quality
@@ -44,18 +43,11 @@ class BaderBadelfRelaxationBase(Workflow):
         # run a static energy and bader/badelf analysis using the same structure
         # as above.
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # I noticed that when I run these calculations sharing the same directory
-        # it just reruns the first calculation twice. For now I'm just moving
-        # everything to a new directory, but this shouldn't be the case. I'll
-        # contact Jack about it. This is even more cluttered with the HSE calculations
-        # which are seeded with a PBE calculation and require the same splitting
-        # of folders.
-        bader_result = cls.population_analysis_workflow.run(
+        # We need to make a new directory because only one vasp workflow can
+        # be run in each directory.
+        static_energy_result = cls.static_energy_workflow.run(
             structure=relaxation_result,
-            # copy_previous_directory = True,
             command=command,
             source=source,
-            find_empties=find_empties,
             directory=static_energy_directory,
-            min_charge=min_charge,
-        ).result()
+        )

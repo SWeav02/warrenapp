@@ -103,6 +103,11 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # I then test if it is within the planes in each site.
         # Only when it matches all the planes do I record it as belonging to a site.
 
+        # !!!!!!!!
+        # In this iteration, I'm going to try and treat voxels that may intersect
+        # 1 or more planes more rigorously
+        #!!!!!!!!!
+
         # The output, then, is a list of voxels (x,y,z position) that belong
         # to each site.
 
@@ -145,6 +150,10 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         a, b, c = lattice["grid_size"]
 
         # Create lists that contain the coordinates of each voxel and their charges
+
+        #!!!!
+        # Why did I do this instead of keeping everything in an array so that
+        # indexing is easier?
         voxel_coords = [idx for idx in itertools.product(range(a), range(b), range(c))]
         voxel_charges = [float(chg[idx[0], idx[1], idx[2]]) for idx in voxel_coords]
 
@@ -196,30 +205,29 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # 90% of them. Only 1 thread per worker. We also suppress output to
         # the terminal and instead send to a dask.out file
         cpu_count = int(0.9 * len(psutil.Process().cpu_affinity()))
-        with redirect_stderr(None):
-            with LocalCluster(
-                n_workers=cpu_count,
-                threads_per_worker=1,
-                memory_limit="auto",
-                processes=True,
-            ) as cluster, Client(cluster) as client:
-                # put list of indices in dask dataframe. Partition with the same
-                # number of partitions as workers
-                ddf = dd.from_pandas(
-                    all_charge_coords,
-                    npartitions=cpu_count,
-                )
+        with LocalCluster(
+            n_workers=cpu_count,
+            threads_per_worker=1,
+            memory_limit="auto",
+            processes=True,
+        ) as cluster, Client(cluster) as client:
+            # put list of indices in dask dataframe. Partition with the same
+            # number of partitions as workers
+            ddf = dd.from_pandas(
+                all_charge_coords,
+                npartitions=cpu_count,
+            )
 
-                # site search for all voxel positions.
-                ddf["site"] = ddf.map_partitions(
-                    get_voxels_site_dask,
-                    results=results,
-                    permutations=permutations,
-                    lattice=lattice,
-                    electride_sites=electride_sites,
-                )
-                # run site search and save as pandas dataframe
-                pdf = ddf.compute()
+            # site search for all voxel positions.
+            ddf["site"] = ddf.map_partitions(
+                get_voxels_site_dask,
+                results=results,
+                permutations=permutations,
+                lattice=lattice,
+                electride_sites=electride_sites,
+            )
+            # run site search and save as pandas dataframe
+            pdf = ddf.compute()
 
         # Group the results by site. Sum the charges and count the total number
         # of voxels for each site. Apply charges and volumes to dictionaries.

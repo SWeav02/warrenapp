@@ -15,6 +15,7 @@ hse_static_settings = dict(
     # insulators or ALGO="Damped" for small bandgap/metals
 )
 
+
 class StaticEnergy__Warren__Hse(Relaxation__Warren__Hse):
     """
     Performs a static energy calculation based on the settings for Warren Lab
