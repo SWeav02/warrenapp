@@ -2,16 +2,16 @@
 
 from simmate.database.workflow_results import StaticEnergy
 
-from warrenapp.workflows.static_energy.pbe import StaticEnergy__Warren__Pbe
+from warrenapp.workflows.static_energy.pbesol import StaticEnergy__Warren__Pbesol
 
 
-class PopulationAnalysis__Warren__ElfPbe(StaticEnergy__Warren__Pbe):
+class PopulationAnalysis__Warren__ElfPbesol(StaticEnergy__Warren__Pbesol):
     """
-    Runs a static energy calculation under Warren lab PBE settings
+    Runs a static energy calculation under Warren lab Pbesol settings
     and also writes the electron localization function (to ELFCAR).
     """
 
-    incar = StaticEnergy__Warren__Pbe.incar.copy()
+    incar = StaticEnergy__Warren__Pbesol.incar.copy()
     incar.update(
         LELF=True,  # writes ELFCAR
         NPAR=1,  # must be set if LELF is set to True

@@ -2,7 +2,7 @@
 
 from warrenapp.workflows.relaxation.pbe import Relaxation__Warren__Pbe
 
-static_settings = dict(
+pbe_static_settings = dict(
     IBRION=-1,  # (optional) locks everything between ionic steps
     NSW=0,  # this is the main static energy setting
     #            LAECHG=True, # currently only set in population analysis
@@ -23,4 +23,4 @@ class StaticEnergy__Warren__Pbe(Relaxation__Warren__Pbe):
     """
 
     incar = Relaxation__Warren__Pbe.incar.copy()
-    incar.update(static_settings)
+    incar.update(pbe_static_settings)

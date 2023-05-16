@@ -210,6 +210,16 @@ def get_empties_from_bcf(
             species="He", coords=charge_site, coords_are_cartesian=True
         )
 
+    # Sometimes the program finds two electride sites that are right next to
+    # eachother(maybe due to voxelation?). To account for this, we check through
+    # all of the sites in our structure and remove any that are close to eachother
+    # (within 0.3 angstrom. This is arbitrary and may need to be updated)
+    sites_to_remove = []
+    for site_index in range(len((structure_empty.sites))):
+        for other_site_index in range(site_index + 1, len(structure_empty.sites)):
+            if structure_empty.get_distance(site_index, other_site_index) < 0.3:
+                sites_to_remove.append(site_index)
+    structure_empty.remove_sites(sites_to_remove)
     return structure_empty
 
 
@@ -318,6 +328,7 @@ def write_density_file_empty(
 def get_density_file_empty(
     directory: Path,
     structure: Structure,
+    min_charge: float = 0.15,
     analysis_type: str = "badelf",
 ):
     """
@@ -330,6 +341,7 @@ def get_density_file_empty(
     structure_empty = get_empties_from_bcf(
         directory=directory,
         structure=structure,
+        min_charge=min_charge,
     )
 
     # Write the structure to a POSCAR_empty file. This must be in a specific format.

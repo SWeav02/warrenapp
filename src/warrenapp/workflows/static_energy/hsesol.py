@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from warrenapp.workflows.relaxation.hsesol import Relaxation__Warren__Hsesol
-from warrenapp.workflows.static_energy.pbe import static_settings
+from warrenapp.workflows.static_energy.hse import hse_static_settings
 
 
 class StaticEnergy__Warren__Hsesol(Relaxation__Warren__Hsesol):
@@ -11,4 +11,4 @@ class StaticEnergy__Warren__Hsesol(Relaxation__Warren__Hsesol):
     """
 
     incar = Relaxation__Warren__Hsesol.incar.copy()
-    incar.update(static_settings)
+    incar.update(hse_static_settings)

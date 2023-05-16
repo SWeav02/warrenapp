@@ -35,7 +35,6 @@ class StaticEnergy__Warren__SeededHse(Workflow):
         directory: Path = None,
         **kwargs,
     ):
-
         # run the initial PBE calculation and save its results as a variable
         initial_directory = directory / "pbe_seed"
         initial_result = cls.initial_calculation.run(
