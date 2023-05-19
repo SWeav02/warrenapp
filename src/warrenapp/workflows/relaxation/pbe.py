@@ -36,7 +36,7 @@ from simmate.apps.vasp.error_handlers import (
     Zheev,
     Zpotrf,
 )
-from simmate.apps.vasp.inputs.potcar_mappings import PBE_ELEMENT_MAPPINGS
+from simmate.apps.vasp.inputs.potcar_mappings import PBE_POTCAR_MAPPINGS
 from simmate.apps.vasp.workflows.base import VaspWorkflow
 
 
@@ -49,13 +49,13 @@ class Relaxation__Warren__Pbe(VaspWorkflow):
     description_doc_short = "Warren Lab's presets for PBE optimization"
 
     functional = "PBE"
-    potcar_mappings = PBE_ELEMENT_MAPPINGS
+    potcar_mappings = PBE_POTCAR_MAPPINGS
     # For now I'm keeping the matproj default element mappings, but I will likely
     # update these for future calculations.
 
     incar = dict(
         ALGO="Fast",
-        EDIFF__per_atom=5.0e-05,
+        EDIFF__per_atom=1e-06,
         ENCUT=520,  # Should set dynamically in future
         IBRION=2,
         ISIF=3,
