@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
+import shutil
 
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
@@ -20,7 +21,7 @@ class RelaxationStaticBase(Workflow):
     use_database = False
     relaxation_workflow = None  # This will be defined in inheriting workflows
     static_energy_workflow = None  # This will be defined in inheriting workflows
-
+    
     @classmethod
     def run_config(
         cls,
@@ -30,7 +31,7 @@ class RelaxationStaticBase(Workflow):
         directory: Path = None,
         **kwargs,
     ):
-        # run a relaxation at PBE quality
+        # run a relaxation
         relaxation_directory = directory / "relaxation"
         relaxation_result = cls.relaxation_workflow.run(
             structure=structure,
