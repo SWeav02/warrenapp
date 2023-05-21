@@ -2,6 +2,7 @@
 
 from .nested_dft import (
     Nested__Warren__RelaxationStaticHse,
+    Nested__Warren__RelaxationStaticHseHse,
     Nested__Warren__RelaxationStaticPbesol,
 )
 from .population_analysis import (
