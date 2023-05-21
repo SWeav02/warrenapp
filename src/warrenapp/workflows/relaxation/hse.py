@@ -18,9 +18,11 @@ class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
         ICHARG=1,
         LHFCALC=True,
         PRECFOCK="Fast",
-        TIME=0.5,  # This is the recommended setting when using the Damped tag.
-        # VASP also suggests lowering it if convergence isn't reached which I may
-        # need to incorporate into an error handler.
+        TIME=0.1,  # This is lower than the recommended setting when using the 
+        # Damped tag because calculations typically take much longer with the
+        # recommended 0.5 setting.
+        # VASP also suggests lowering it if convergence isn't reached so there
+        # is precedence for this.
         VDW_S8=2.310,  # these three tags are necessary for IVDW 12 with HSE06
         VDW_A1=0.383,
         VDW_A2=5.685,

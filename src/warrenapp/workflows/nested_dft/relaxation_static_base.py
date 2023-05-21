@@ -50,4 +50,5 @@ class RelaxationStaticBase(Workflow):
             command=command,
             source=source,
             directory=static_energy_directory,
+            copy_previous_directory=True,
         )
