@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import shutil
+import os
 
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
@@ -46,10 +47,12 @@ class RelaxationStaticBase(Workflow):
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # We need to make a new directory because only one vasp workflow can
         # be run in each directory.
+        os.mkdir(static_energy_directory)
+        shutil.copyfile(relaxation_directory / "WAVECAR", static_energy_directory)
         static_energy_result = cls.static_energy_workflow.run(
             structure=relaxation_result,
             command=command,
             source=source,
             directory=static_energy_directory,
-            copy_previous_directory=True,
+            # copy_previous_directory=True,
         )
