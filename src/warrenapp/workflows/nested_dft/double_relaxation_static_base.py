@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from pathlib import Path
-# import shutil
-# import os
+import shutil
+import os
 
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
@@ -42,13 +42,16 @@ class RelaxationRelaxationStaticBase(Workflow):
             directory=relaxation1_directory,
         ).result()
         
-        # runa  relaxation at higher quality with copied WAVECAR
+        # make the directory for the second relaxation and copy the WAVECAR
+        # then run
         relaxation2_directory = directory / "high_quality_relaxation"
+        os.mkdir(relaxation2_directory)
+        shutil.copyfile(relaxation1_directory / "WAVECAR", relaxation2_directory / "WAVECAR")
         relaxation2_result = cls.low_quality_relaxation_workflow.run(
             structure=relaxation1_result,
             command=command,
             directory=relaxation2_directory,
-            copy_previous_directory=True
+            # copy_previous_directory=True
         ).result()
 
         static_energy_directory = directory / "static_energy"
@@ -57,11 +60,11 @@ class RelaxationRelaxationStaticBase(Workflow):
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # We need to make a new directory because only one vasp workflow can
         # be run in each directory.
-        # os.mkdir(static_energy_directory)
-        # shutil.copyfile(relaxation_directory / "WAVECAR", static_energy_directory / "WAVECAR")
+        os.mkdir(static_energy_directory)
+        shutil.copyfile(relaxation2_directory / "WAVECAR", static_energy_directory / "WAVECAR")
         static_energy_result = cls.static_energy_workflow.run(
             structure=relaxation2_result,
             command=command,
             directory=static_energy_directory,
-            copy_previous_directory=True,
+            # copy_previous_directory=True,
         )
