@@ -55,13 +55,13 @@ class Relaxation__Warren__Pbe(VaspWorkflow):
 
     incar = dict(
         ALGO="Fast",
-        EDIFF__per_atom=1e-05, # This is slightly higher quality than the settings in Simmate (5e-05)
+        EDIFF__per_atom=1e-05,  # This is slightly higher quality than the settings in Simmate (5e-05)
         ENCUT=520,  # Should set dynamically in future
         IBRION=2,
         ISIF=3,
         ISMEAR=0,  # Gaussian smearing
         ISPIN=2,
-        KSPACING=0.25, # This is probably on the edge of good quality
+        KSPACING=0.25,  # This is probably on the edge of good quality
         LASPH=True,
         LORBIT=11,
         LREAL="Auto",

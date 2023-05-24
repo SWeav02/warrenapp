@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-import shutil
 import os
+import shutil
+from pathlib import Path
 
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
@@ -22,7 +22,7 @@ class RelaxationStaticBase(Workflow):
     use_database = False
     relaxation_workflow = None  # This will be defined in inheriting workflows
     static_energy_workflow = None  # This will be defined in inheriting workflows
-    
+
     @classmethod
     def run_config(
         cls,
@@ -48,7 +48,9 @@ class RelaxationStaticBase(Workflow):
         # We need to make a new directory because only one vasp workflow can
         # be run in each directory.
         os.mkdir(static_energy_directory)
-        shutil.copyfile(relaxation_directory / "WAVECAR", static_energy_directory / "WAVECAR")
+        shutil.copyfile(
+            relaxation_directory / "WAVECAR", static_energy_directory / "WAVECAR"
+        )
         static_energy_result = cls.static_energy_workflow.run(
             structure=relaxation_result,
             command=command,

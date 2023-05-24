@@ -5,8 +5,9 @@ from warrenapp.workflows.population_analysis.prebader_badelf_dft import (
 )
 from warrenapp.workflows.relaxation.pbesol import Relaxation__Warren__Pbesol
 
+
 # We want to run a PBE relaxation followed by an HSE static energy calculation.
-# Copying the WAVECAR will make this much faster, but this requires that a 
+# Copying the WAVECAR will make this much faster, but this requires that a
 # WAVECAR exists. However, we generally don't want all relaxation calculations
 # to save the WAVECAR so we make a custom workflow here.
 class Relaxation__Warren__PbeWithWavecar(Relaxation__Warren__Pbesol):
@@ -15,12 +16,10 @@ class Relaxation__Warren__PbeWithWavecar(Relaxation__Warren__Pbesol):
     tag in the INCAR for writing the WAVECAR. This is intended to be used with
     nested workflows to increase the speed of the static energy calculation
     """
+
     incar = Relaxation__Warren__Pbesol().incar.copy()
-    incar.update(
-        dict(
-            LWAVE=True
-        )
-    )
+    incar.update(dict(LWAVE=True))
+
 
 class Nested__Warren__RelaxationStaticPbeHse(RelaxationStaticBase):
     """

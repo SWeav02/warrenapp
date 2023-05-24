@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from warrenapp.workflows.relaxation.pbe import Relaxation__Warren__Pbe
 from warrenapp.inputs.warren_potcar_mappings import HSE_POTCAR_MAPPINGS
+from warrenapp.workflows.relaxation.pbe import Relaxation__Warren__Pbe
+
 
 class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
     """
@@ -12,7 +13,7 @@ class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
     # some potcars don't work with HSE in VASP 5.x.x. I change them here
     # in the hopes that they will work properly.
     potcar_mappings = HSE_POTCAR_MAPPINGS
-    
+
     incar = Relaxation__Warren__Pbe.incar.copy()
     incar.update(
         ALGO="Damped",  # We use Damped because it is the recommended setting by
@@ -21,7 +22,7 @@ class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
         ICHARG=1,
         LHFCALC=True,
         PRECFOCK="Fast",
-        TIME=0.2,  # This is lower than the recommended setting (0.5) when using the 
+        TIME=0.2,  # This is lower than the recommended setting (0.5) when using the
         # Damped tag because calculations struggle to converge.
         # VASP also suggests lowering it if convergence isn't reached so there
         # is precedence for this.

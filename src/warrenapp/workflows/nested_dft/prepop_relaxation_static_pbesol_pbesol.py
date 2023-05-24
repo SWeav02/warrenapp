@@ -5,6 +5,7 @@ from warrenapp.workflows.population_analysis.prebader_badelf_dft import (
 )
 from warrenapp.workflows.relaxation.pbesol import Relaxation__Warren__Pbesol
 
+
 class Nested__Warren__RelaxationStaticPbePbe(RelaxationStaticBase):
     """
     Runs an PBEsol quality structure relaxation and PBEsol quality static energy
