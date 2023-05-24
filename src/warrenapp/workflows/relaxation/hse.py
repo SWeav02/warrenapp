@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from warrenapp.inputs.warren_potcar_mappings import HSE_POTCAR_MAPPINGS
 from warrenapp.workflows.relaxation.pbe import Relaxation__Warren__Pbe
 
 
@@ -9,6 +10,9 @@ class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
     """
 
     description_doc_short = "Warren Lab presets for HSE geometry optimization"
+    # some potcars don't work with HSE in VASP 5.x.x. I change them here
+    # in the hopes that they will work properly.
+    potcar_mappings = HSE_POTCAR_MAPPINGS
 
     incar = Relaxation__Warren__Pbe.incar.copy()
     incar.update(
@@ -18,9 +22,10 @@ class Relaxation__Warren__Hse(Relaxation__Warren__Pbe):
         ICHARG=1,
         LHFCALC=True,
         PRECFOCK="Fast",
-        TIME=0.5,  # This is the recommended setting when using the Damped tag.
-        # VASP also suggests lowering it if convergence isn't reached which I may
-        # need to incorporate into an error handler.
+        TIME=0.2,  # This is lower than the recommended setting (0.5) when using the
+        # Damped tag because calculations struggle to converge.
+        # VASP also suggests lowering it if convergence isn't reached so there
+        # is precedence for this.
         VDW_S8=2.310,  # these three tags are necessary for IVDW 12 with HSE06
         VDW_A1=0.383,
         VDW_A2=5.685,

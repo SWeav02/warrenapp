@@ -8,10 +8,10 @@ from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
 
-class RelaxationStaticBase(Workflow):
+class RelaxationRelaxationStaticBase(Workflow):
     """
-    Base class for running a relaxation followed by a static energy
-    calculation.
+    Base class for running a PBE relaxation followed by an HSE relaxation
+    and then a static energy calculation.
 
     This should NOT be run on its own. It is meant to be inherited from in
     other workflows.
@@ -20,7 +20,12 @@ class RelaxationStaticBase(Workflow):
     # We don't want to save anything from the parent workflow, only the
     # sub workflows (relaxation and static energy) so we set use_database=False
     use_database = False
-    relaxation_workflow = None  # This will be defined in inheriting workflows
+    low_quality_relaxation_workflow = (
+        None  # This will be defined in inheriting workflows
+    )
+    high_quality_relaxation_workflow = (
+        None  # This will be defined in inheriting workflows
+    )
     static_energy_workflow = None  # This will be defined in inheriting workflows
 
     @classmethod
@@ -32,13 +37,27 @@ class RelaxationStaticBase(Workflow):
         directory: Path = None,
         **kwargs,
     ):
-        # run a relaxation
-        relaxation_directory = directory / "relaxation"
-        relaxation_result = cls.relaxation_workflow.run(
+        # run a relaxation at low quality
+        relaxation1_directory = directory / "low_quality_relaxation"
+        relaxation1_result = cls.low_quality_relaxation_workflow.run(
             structure=structure,
             command=command,
             source=source,
-            directory=relaxation_directory,
+            directory=relaxation1_directory,
+        ).result()
+
+        # make the directory for the second relaxation and copy the WAVECAR
+        # then run
+        relaxation2_directory = directory / "high_quality_relaxation"
+        os.mkdir(relaxation2_directory)
+        shutil.copyfile(
+            relaxation1_directory / "WAVECAR", relaxation2_directory / "WAVECAR"
+        )
+        relaxation2_result = cls.high_quality_relaxation_workflow.run(
+            structure=relaxation1_result,
+            command=command,
+            directory=relaxation2_directory,
+            # copy_previous_directory=True
         ).result()
 
         static_energy_directory = directory / "static_energy"
@@ -49,12 +68,11 @@ class RelaxationStaticBase(Workflow):
         # be run in each directory.
         os.mkdir(static_energy_directory)
         shutil.copyfile(
-            relaxation_directory / "WAVECAR", static_energy_directory / "WAVECAR"
+            relaxation2_directory / "WAVECAR", static_energy_directory / "WAVECAR"
         )
         static_energy_result = cls.static_energy_workflow.run(
-            structure=relaxation_result,
+            structure=relaxation2_result,
             command=command,
-            source=source,
             directory=static_energy_directory,
             # copy_previous_directory=True,
         )

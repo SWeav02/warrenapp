@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from .nested_dft import (
-    Nested__Warren__RelaxationStaticHse,
-    Nested__Warren__RelaxationStaticPbesol,
+    Nested__Warren__RelaxationStaticHseHse,
+    Nested__Warren__RelaxationStaticPbeHse,
+    Nested__Warren__RelaxationStaticPbeHseHse,
+    Nested__Warren__RelaxationStaticPbePbe,
+    Relaxation__Warren__HseWithWavecar,
+    Relaxation__Warren__PbeWithWavecar,
 )
 from .population_analysis import (
     PopulationAnalysis__Warren__BadelfHse,
