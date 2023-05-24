@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from warrenapp.workflows.nested_dft.relaxation_static_base import RelaxationStaticBase
+from warrenapp.workflows.nested_dft.double_relaxation_static_base import (
+    RelaxationRelaxationStaticBase)
 from warrenapp.workflows.population_analysis.prebader_badelf_dft import (
     StaticEnergy__Warren__PrebadelfHse,
 )
@@ -10,7 +11,7 @@ from warrenapp.workflows.nested_dft.prepop_relaxation_static_hse_hse import(
     Relaxation__Warren__HseWithWavecar
     )
 
-class Nested__Warren__RelaxationStaticPbeHseHse(RelaxationStaticBase):
+class Nested__Warren__RelaxationStaticPbeHseHse(RelaxationRelaxationStaticBase):
     """
     Runs a PBEsol quality structure relaxation, an HSE quality relaxation, and 
     an HSE static energy calculation.
