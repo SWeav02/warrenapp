@@ -13,7 +13,7 @@ This extension is built off of [Simmate](https://github.com/jacksund/simmate). I
 Tutorials are at: https://jacksund.github.io/simmate/getting_started/overview/
 
 ### How to Install
-1. If you don't already have Simmate installed, follow the instructions to [install Simmate](https://jacksund.github.io/simmate/getting_started/installation/quick_start/) making sure to install Python 3.10
+1. If you don't already have Simmate installed, follow the instructions to [install Simmate](https://jacksund.github.io/simmate/getting_started/installation/quick_start/)
 ``` shell
 conda create -n my_env -c conda-forge python=3.11 simmate
 conda activate my_env
