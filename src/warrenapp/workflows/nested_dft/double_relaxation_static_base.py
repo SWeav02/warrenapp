@@ -47,7 +47,7 @@ class RelaxationRelaxationStaticBase(Workflow):
         relaxation2_directory = directory / "high_quality_relaxation"
         os.mkdir(relaxation2_directory)
         shutil.copyfile(relaxation1_directory / "WAVECAR", relaxation2_directory / "WAVECAR")
-        relaxation2_result = cls.low_quality_relaxation_workflow.run(
+        relaxation2_result = cls.high_quality_relaxation_workflow.run(
             structure=relaxation1_result,
             command=command,
             directory=relaxation2_directory,
