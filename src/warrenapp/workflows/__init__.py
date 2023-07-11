@@ -12,6 +12,7 @@ from .population_analysis import (
     PopulationAnalysis__Warren__BadelfHse,
     PopulationAnalysis__Warren__BadelfPbesol,
     PopulationAnalysis__Warren__BaderBadelf,
+    PopulationAnalysis__Warren__BaderBadelfWrap,
     PopulationAnalysis__Warren__BaderBadelfHse,
     PopulationAnalysis__Warren__BaderBadelfPbesol,
     PopulationAnalysis__Warren__BaderHse,
