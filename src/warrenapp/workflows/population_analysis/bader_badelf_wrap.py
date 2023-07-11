@@ -17,6 +17,7 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
         structure,
         directory: Path,
         source: dict = None,
+        **kwargs,
             ):
         static_directory = directory
         parent_directory = static_directory.parent.absolute()
