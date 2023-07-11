@@ -7,15 +7,14 @@ from simmate.toolkit import Structure
 
 from warrenapp.badelf_tools.badelf_algorithm_functions import (
     get_closest_neighbors,
-    get_grid,
     get_lattice,
-    get_line,
+    get_line_frac_min_rough,
+    get_partitioning_grid,
+    get_partitioning_line_rough,
     get_position_from_min,
     get_real_from_vox,
-    local_min,
-    savgol_filter,
-    voxel_from_frac,
-    voxel_from_neigh,
+    get_voxel_from_frac,
+    get_voxel_from_neigh_CrystalNN,
 )
 
 
@@ -39,19 +38,18 @@ def get_badelf_radius(neigh: list, lattice: dict, site_pos: dict, grid):
     """
 
     # get voxel of neighbor from cns neighbor dict
-    neigh_pos = voxel_from_neigh(neigh, lattice)
+    neigh_pos = get_voxel_from_neigh_CrystalNN(neigh, lattice)
     real_site_pos = get_real_from_vox(site_pos, lattice)
     # we need a straight line between these two points.  get list of all ELF values
-    elf_line = get_line(site_pos, neigh_pos, grid)
+    elf_pos, elf_values = get_partitioning_line_rough(site_pos, neigh_pos, grid)
     # smooth the line
-    smoothed_line = savgol_filter(elf_line, window_length=15, polyorder=3)
 
     # find the minimum position and value along the elf_line
     # the first element is the fractional position, measured from site_pos
-    min_elf = local_min(smoothed_line)
+    min_elf = get_line_frac_min_rough(elf_values, rough_partitioning=True)
 
     # convert the minimum in the ELF back into a position in the voxel grid
-    min_pos_vox = get_position_from_min(min_elf, site_pos, neigh_pos)
+    min_pos_vox = get_position_from_min(min_elf[0], site_pos, neigh_pos)
 
     """ a point and normal vector describe a plane
     a(x-x1) + b(y-y1) + c(z-z1) = 0 
@@ -77,7 +75,7 @@ def get_max_radius(structure: Structure, partition_file: str):
     """
     closest_neighbors = get_closest_neighbors(structure)
     lattice = get_lattice(partition_file)
-    grid = get_grid(partition_file, lattice)
+    grid = get_partitioning_grid(partition_file, lattice)
     site_radii = {}
     element_radii = {}
     # iterate through each site in the structure
@@ -85,7 +83,7 @@ def get_max_radius(structure: Structure, partition_file: str):
         # create key for each site
         site_radii[site] = {}
         # get voxel position from fractional site.
-        site_pos = voxel_from_frac(site, lattice)
+        site_pos = get_voxel_from_frac(site, lattice)
         # We want to get the radius based on bonds to closest neighbors. This
         # is stored in our closest neighbors dictionary as the first neighbor
         # site, neigh[0] for each site.

@@ -12,7 +12,7 @@ from warrenapp.badelf_tools.utilities import (
     get_density_file_empty,
 )
 from warrenapp.models import WarrenPopulationAnalysis
-from warrenapp.workflows.population_analysis.warren_badelf_v3_7 import (
+from warrenapp.workflows.population_analysis.warren_badelf_v3_9 import (
     PopulationAnalysis__Warren__BadelfIonicRadii,
 )
 
@@ -153,47 +153,49 @@ class VaspBaderBase(Workflow):
         **kwargs,
     ):
         if find_empties:
-            # Run static energy calculation
-            prebader_result = cls.static_energy_prebadelf.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            # Run static energy calculation if not already done
+            if cls.static_energy_prebadelf is not None:
+                prebader_result = cls.static_energy_prebadelf.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
             # Run badelf on initial file output
             PopulationAnalysis__Warren__BadelfInit.run(
                 structure=structure,
-                directory=prebader_result.directory,
+                directory=directory,
             ).result()
             # Combine AECCAR0 and AECCAR2
             PopulationAnalysis__Bader__CombineChgcars.run(
-                directory=prebader_result.directory,
+                directory=directory,
             ).result()
             # Find electride sites, place empty atoms, and run bader
             PopulationAnalysis__Warren__BaderEmpty.run(
                 structure=structure,
-                directory=prebader_result.directory,
+                directory=directory,
                 min_charge=min_charge,
             )
 
         else:
-            prebader_result = cls.static_energy_prebader.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            if cls.static_energy_prebader is not None:
+                prebader_result = cls.static_energy_prebader.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
 
             # Setup chargecars for the bader analysis and wait until complete
             PopulationAnalysis__Bader__CombineChgcars.run(
-                directory=prebader_result.directory,
+                directory=directory,
             ).result()
 
             # Bader only adds files and doesn't overwrite any, so I just run it
             # in the original directory. I may switch to copying over to a new
             # directory in the future though.
             PopulationAnalysis__Warren__Bader.run(
-                directory=prebader_result.directory,
+                directory=directory,
             ).result()
 
 
@@ -223,37 +225,39 @@ class VaspBadElfBase(Workflow):
         **kwargs,
     ):
         if find_empties:
-            # Run static_energy calculation
-            prebadelf_result = cls.static_energy_prebadelf.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            # Run static_energy calculation if not already done
+            if cls.static_energy_prebadelf is not None:
+                prebadelf_result = cls.static_energy_prebadelf.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
             # Run badelf on initial output
             PopulationAnalysis__Warren__BadelfInit.run(
                 structure=structure,
-                directory=prebadelf_result.directory,
+                directory=directory,
             ).result()
             # Find electride sites, place empty atoms, and generate chgcar
             # like files for each atomic site
             PopulationAnalysis__Warren__GetAtomChgcar.run(
-                directory=prebadelf_result.directory,
+                directory=directory,
                 analysis_type="badelf",
                 min_charge=min_charge,
             )
             # Run Warren lab version of BadELF algorithm
             PopulationAnalysis__Warren__BadelfIonicRadii.run(
-                directory=prebadelf_result.directory,
+                directory=directory,
             )
 
         else:
-            prebadelf_result = cls.static_energy_prebadelf.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            if cls.static_energy_prebadelf is not None:
+                prebadelf_result = cls.static_energy_prebadelf.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
 
             # Bader only adds files and doesn't overwrite any, so I just run it
             # in the original directory. I may switch to copying over to a new
@@ -261,7 +265,7 @@ class VaspBadElfBase(Workflow):
             # We don't need to generate empty atom files because we're not looking
             # for electride sites here.
             PopulationAnalysis__Warren__BadelfIonicRadii.run(
-                directory=prebadelf_result.directory,
+                directory=directory,
                 empty_structure_file="POSCAR",
                 partition_file="ELFCAR",
                 charge_file="CHGCAR",
@@ -299,13 +303,14 @@ class VaspBaderBadElfBase(Workflow):
             "simmate_population_summary.csv",
         ]
         if find_empties:
-            # Run static_energy calculation
-            prebadelf_result = cls.static_energy_prebadelf.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            # Run static_energy calculation if not already run
+            if cls.static_energy_prebadelf is not None:
+                prebadelf_result = cls.static_energy_prebadelf.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
             # Combine AECCAR0 and AECCAR2 for bader later in workflow
             PopulationAnalysis__Bader__CombineChgcars.run(
                 directory=directory,
@@ -326,8 +331,11 @@ class VaspBaderBadElfBase(Workflow):
             PopulationAnalysis__Warren__BadelfIonicRadii.run(directory=directory)
             # Create directories for badelf and bader results so that they
             # don't get overwritten
-            Path(directory / "badelf").mkdir()
-            Path(directory / "bader").mkdir()
+            try:
+                Path(directory / "badelf").mkdir()
+                Path(directory / "bader").mkdir()
+            except:
+                pass
             # Copy badelf results into badelf
             for file in badelf_files:
                 shutil.copy(directory / file, directory / "badelf")
@@ -344,12 +352,13 @@ class VaspBaderBadElfBase(Workflow):
             for file in bader_files:
                 shutil.copy(directory / file, directory / "bader")
         else:
-            prebadelf_result = cls.static_energy_prebadelf.run(
-                structure=structure,
-                command=command,
-                source=source,
-                directory=directory,
-            ).result()
+            if cls.static_energy_prebadelf is not None:
+                prebadelf_result = cls.static_energy_prebadelf.run(
+                    structure=structure,
+                    command=command,
+                    source=source,
+                    directory=directory,
+                ).result()
 
             # Setup chargecars for the bader analysis and wait until complete
             PopulationAnalysis__Bader__CombineChgcars.run(
@@ -363,8 +372,11 @@ class VaspBaderBadElfBase(Workflow):
                 charge_file="CHGCAR",
             ).result()
             # Create directories for badelf and bader results
-            Path(directory / "badelf").mkdir()
-            Path(directory / "bader").mkdir()
+            try:
+                Path(directory / "badelf").mkdir()
+                Path(directory / "bader").mkdir()
+            except:
+                pass
             # Copy badelf files
             for file in badelf_files:
                 shutil.copy(directory / file, directory / "badelf")

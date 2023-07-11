@@ -7,8 +7,9 @@ Created on Wed Mar 22 21:43:11 2023
 """
 
 import itertools
+import math
+import time
 import warnings
-from contextlib import redirect_stderr
 from pathlib import Path
 
 import dask.dataframe as dd
@@ -21,15 +22,19 @@ from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
 from warrenapp.badelf_tools.badelf_algorithm_functions import (
-    get_charge,
+    get_26_neighbors,
+    get_charge_density_grid,
     get_electride_sites,
-    get_grid,
     get_lattice,
-    get_partitioning,
+    get_max_voxel_dist,
+    get_number_of_partitions,
+    get_partitioning_fine,
+    get_partitioning_grid,
+    get_partitioning_rough,
     get_real_from_frac,
-    get_voronoi_neighbors,
     get_voxels_site_dask,
-    get_voxels_site_garbage_dask,
+    get_voxels_site_multi_plane,
+    get_voxels_site_volume_ratio_dask,
 )
 from warrenapp.models import WarrenPopulationAnalysis
 
@@ -53,12 +58,13 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         charge_file: str = "CHGCAR",
         **kwargs,
     ):
+        t0 = time.time()
         structure = Structure.from_file(directory / structure_file)
         # get dictionary of sites and closest neighbors. This always throws
         # the same warning about He's EN so we suppress that here
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            voronoi_neighbors = get_voronoi_neighbors(structure=structure)
+            neighbors26 = get_26_neighbors(structure=structure)
 
         # read in lattice with and without electride sites
         lattice = get_lattice(partition_file=directory / partition_file)
@@ -77,20 +83,47 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # volumes for our output file
         voxel_volume = lattice["volume"] / np.prod(lattice["grid_size"])
 
+        # we also want the voxel resolution
+        voxel_resolution = np.prod(lattice["grid_size"]) / lattice["volume"]
+        print(voxel_resolution)
+
         # read in partition grid
-        grid = get_grid(partition_file=directory / partition_file, lattice=lattice)
+        if partition_file == "ELFCAR":
+            grid = get_partitioning_grid(
+                partition_file=directory / partition_file, lattice=lattice
+            )
+        elif partition_file == "CHGCAR":
+            grid = get_charge_density_grid(
+                charge_file=directory / partition_file, lattice=lattice
+            )
+
         # The algorithm now looks at each site-neighbor pair.
         # Along the bond between the pair, we look at ELF values.
         # We find the position of the minimum ELF value.
         # We then find the plane that passes through this minimum and
         # that is perpendicular to the bond between the pair.
 
-        results = get_partitioning(
-            voronoi_neighbors=voronoi_neighbors,
-            lattice=lattice,
-            electride_sites=electride_sites,
-            grid=grid,
-        )
+        if voxel_resolution > 130000:
+            results = get_partitioning_rough(
+                neighbors26=neighbors26,
+                lattice=lattice,
+                grid=grid,
+                rough_partitioning=True,
+            )
+        else:
+            rough_partition_results = get_partitioning_rough(
+                neighbors26=neighbors26,
+                lattice=lattice,
+                grid=grid,
+            )
+            results = get_partitioning_fine(rough_partition_results, grid, lattice)
+        t1 = time.time()
+
+        print(f"Partitioning Time: {t1-t0}")
+        # We will also need to find the maximum distance the center of a voxel
+        # can be from a plane and still be intersected by it. That way we can
+        # handle voxels near partitioning planes with more accuracy
+        max_voxel_dist = get_max_voxel_dist(lattice)
 
         # Now that we've identified the planes that divide the ELF, we now need to
         # actually apply that knowledge, voxel by voxel.
@@ -138,7 +171,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
 
         # read in charge density file
         # make sure this file has same number of atoms as elfcar
-        chg = get_charge(
+        chg = get_charge_density_grid(
             charge_file=directory / charge_file,
             lattice=lattice,
         )
@@ -160,12 +193,14 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # Create a dataframe that has each coordinate index and the charge as columns
         # Later we'll remove voxels that belong to electrides from this dataframe
         all_charge_coords = pd.DataFrame(voxel_coords, columns=["x", "y", "z"]).add(1)
+
         all_charge_coords["chg"] = voxel_charges
         all_charge_coords["site"] = None
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Now iterate through the charge density coordinates for each electride
         for electride in electride_sites:
             # Pull in electride charge density from bader output file (BvAt####.dat format)
-            electride_chg = get_charge(
+            electride_chg = get_charge_density_grid(
                 charge_file=directory / f"BvAt{str(electride+1).zfill(4)}.dat",
                 lattice=empty_lattice,
             )
@@ -201,21 +236,33 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 permutations_sorted.append(item)
         permutations_sorted.insert(0, permutations_sorted.pop(7))
 
-        # open dask client. Find a available number of cores/threads and use
-        # 90% of them. Only 1 thread per worker. We also suppress output to
-        # the terminal and instead send to a dask.out file
-        cpu_count = int(0.9 * len(psutil.Process().cpu_affinity()))
+        # We want to open a local dask cluster with appropriate settings. I've
+        # done some light testing and found that 1 thread per worker, 2GB mem,
+        # and partition sizes of 128,000 voxel coords seems reasonable.
+        # For smaller systems (<128,000) it was still benefitial to parallelize
+        # though less efficient
+
+        # Get the total number of cpus available and memory available
+        cpu_count = math.floor(len(psutil.Process().cpu_affinity()) / 2)
+        memory_gb = psutil.virtual_memory()[1] / (1e9)
+        # Each worker needs at least 2GB of memory. We select either the number
+        # of workers that could have at least this much memory or the number
+        # of cores/threads, whichever is smaller
+        nworkers = min(math.floor(memory_gb / 2), cpu_count)
         with LocalCluster(
-            n_workers=cpu_count,
-            threads_per_worker=1,
+            n_workers=nworkers,
+            threads_per_worker=2,
             memory_limit="auto",
             processes=True,
         ) as cluster, Client(cluster) as client:
             # put list of indices in dask dataframe. Partition with the same
             # number of partitions as workers
+            npartitions = get_number_of_partitions(
+                df=all_charge_coords, nworkers=nworkers
+            )
             ddf = dd.from_pandas(
                 all_charge_coords,
-                npartitions=cpu_count,
+                npartitions=npartitions,
             )
 
             # site search for all voxel positions.
@@ -225,59 +272,92 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 permutations=permutations,
                 lattice=lattice,
                 electride_sites=electride_sites,
+                max_distance=max_voxel_dist,
             )
             # run site search and save as pandas dataframe
             pdf = ddf.compute()
 
-        # Group the results by site. Sum the charges and count the total number
-        # of voxels for each site. Apply charges and volumes to dictionaries.
-        pdf_grouped = pdf.groupby(by="site")
-        pdf_grouped_charge = pdf_grouped["chg"].sum()
-        pdf_grouped_voxels = pdf_grouped["site"].size()
-        for site in results_charge:
-            results_charge[site] = pdf_grouped_charge[site]
-            results_volume[site] = pdf_grouped_voxels[site] * voxel_volume
-        # some of the voxels will not return a site. For these we need to check the
-        # nearby voxels to see which site is the most common and assign them to that
-        # site. To do this we essentially repeat the previous several steps but with
-        # the new site searching method.
+            # Group the results by site. Sum the charges and count the total number
+            # of voxels for each site. Apply charges and volumes to dictionaries.
+            pdf_grouped = pdf.groupby(by="site")
+            pdf_grouped_charge = pdf_grouped["chg"].sum()
+            pdf_grouped_voxels = pdf_grouped["site"].size()
+            for site in results_charge:
+                results_charge[site] = pdf_grouped_charge[site]
+                results_volume[site] = pdf_grouped_voxels[site] * voxel_volume
+            # some of the voxels will not return a site. For these we need to check the
+            # nearby voxels to see which site is the most common and assign them to that
+            # site. To do this we essentially repeat the previous several steps but with
+            # the new site searching method.
 
-        # find where the site search returned None
-        garbage_index = np.where(pdf["site"].isnull())
+            # find where the site search returned None
+            near_plane_index = np.where(pdf["site"].isnull())
+            # We need to convert Nan in pdf to None type objects for when we are
+            # iterating through them later
+            pdf = pdf.replace({np.nan: None})
+            # create new pandas dataframe only containing voxels with no site
+            near_plane_pdf = pdf.iloc[near_plane_index].drop(columns=["site"])
+            # get a reasonable number of partitions for the near_plane dataframe. This
+            # takes slightly more memory than the regular index finder so we increase
+            # the number of partition.
+
+            near_plane_npartitions = get_number_of_partitions(
+                df=near_plane_pdf, nworkers=nworkers
+            )
+
+            # switch from pandas dataframe to partitioned dask dataframe
+            near_plane_ddf = dd.from_pandas(
+                near_plane_pdf,
+                npartitions=near_plane_npartitions,
+            )
+            # assign function to search for nearby voxels accross dask partitions
+            near_plane_ddf["site"] = near_plane_ddf.map_partitions(
+                get_voxels_site_volume_ratio_dask,
+                lattice=lattice,
+                results=results,
+                permutations=permutations,
+                voxel_volume=voxel_volume,
+            )
+
+            # compute and return to pandas
+            near_plane_pdf = near_plane_ddf.compute()
+
+        for row in near_plane_pdf.iterrows():
+            try:
+                for site in row[1][4]:
+                    results_charge[site] += row[1][4][site] * row[1][3]
+                    results_volume[site] += row[1][4][site] * voxel_volume
+            except:
+                pass
+        # Some sites will be returned as none because they are being split
+        # by more than one bordering plane. We handle these with less accuracy
+        multi_plane_index = np.where(near_plane_pdf["site"].isnull())
         # We need to convert Nan in pdf to None type objects for when we are
         # iterating through them later
-        pdf = pdf.replace({np.nan: None})
+        near_plane_pdf = near_plane_pdf.replace({np.nan: None})
         # create new pandas dataframe only containing voxels with no site
-        garbage_pdf = pdf.iloc[garbage_index].drop(columns=["site"])
-        # open cluster as before to allow dask parallelization. Again suppress
-        # dask output and send to dask.out
-        with redirect_stderr(None):
-            with LocalCluster(
-                n_workers=cpu_count,
-                threads_per_worker=1,
-                memory_limit="auto",
-                processes=True,
-            ) as cluster, Client(cluster) as client:
-                # switch from pandas dataframe to partitioned dask dataframe
-                garbage_ddf = dd.from_pandas(
-                    garbage_pdf,
-                    npartitions=cpu_count,
-                )
-                # assign function to search for nearby voxels accross dask partitions
-                garbage_ddf["site"] = garbage_ddf.map_partitions(
-                    get_voxels_site_garbage_dask,
+        multi_plane_pdf = near_plane_pdf.iloc[multi_plane_index].drop(columns=["site"])
+
+        if len(multi_plane_pdf) > 0:
+            multi_plane_pdf["sites"] = multi_plane_pdf.apply(
+                lambda x: get_voxels_site_multi_plane(
+                    x["x"],
+                    x["y"],
+                    x["z"],
                     pdf=pdf,
+                    near_plane_pdf=near_plane_pdf,
                     lattice=lattice,
                     electride_sites=electride_sites,
                     results=results,
-                )
-            # compute and return to pandas
-            garbage_pdf = garbage_ddf.compute()
-        for row in garbage_pdf.iterrows():
-            for site in row[1][4]:
-                results_charge[site] += row[1][4][site] * row[1][3]
-                results_volume[site] += row[1][4][site] * voxel_volume
-
+                ),
+                axis=1,
+            )
+            for row in multi_plane_pdf.iterrows():
+                for site in row[1][4]:
+                    results_charge[site] += row[1][4][site] * row[1][3]
+                    results_volume[site] += row[1][4][site] * voxel_volume
+        else:
+            print("no voxels intercepted by more than one plane")
         # divide charge by volume to get true charge
         # this is a vasp convention
         for site, charge in results_charge.items():
@@ -319,3 +399,6 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
 
         with open(directory / "ACF.dat", "w") as file:
             file.writelines(acf_lines)
+        t2 = time.time()
+        print(f"Time for partitioning: {t1 - t0}")
+        print(f"Total time: {t2-t0}")
