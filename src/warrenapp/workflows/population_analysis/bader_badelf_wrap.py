@@ -11,7 +11,7 @@ from shutil import unpack_archive, make_archive
 import os
 from simmate.engine import Workflow
 
-class PopulationAnalysis__Warrenapp__BaderBadelfWrap(Workflow):
+class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
     @staticmethod
     def run_config(
         structure,
