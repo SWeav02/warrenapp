@@ -7,7 +7,7 @@ from simmate.apps.vasp.error_handlers import (
     Eddrmm,
     Edwav,
     ElfKpar,
-    Frozen,
+#    Frozen,
     IncorrectShift,
     IncorrectSmearing,
     InsufficientBands,
@@ -55,7 +55,7 @@ class Relaxation__Warren__Pbe(VaspWorkflow):
 
     incar = dict(
         ALGO="Fast",
-        EDIFF__per_atom=1e-05,  # This is slightly higher quality than the settings in Simmate (5e-05)
+        EDIFF__per_atom=5e-05,  # This is slightly higher quality than the settings in Simmate (5e-05)
         ENCUT=520,  # Should set dynamically in future
         IBRION=2,
         ISIF=3,
@@ -189,7 +189,7 @@ class Relaxation__Warren__Pbe(VaspWorkflow):
         NonConverging(),
         Potim(),
         PositiveEnergy(),
-        Frozen(),
+#        Frozen(),
         LargeSigma(),
         Walltime(),
     ]
