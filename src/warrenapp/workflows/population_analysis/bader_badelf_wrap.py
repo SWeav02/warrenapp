@@ -12,6 +12,7 @@ import os
 from simmate.engine import Workflow
 
 class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
+    use_database = False
     @staticmethod
     def run_config(
         structure,
@@ -24,7 +25,10 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
         worker_directory = static_directory.parent.parent
         # unzip the results directory into the same worker directory to ensure
         # directory path is the same.
-        unpack_archive(f"{parent_directory}.zip",worker_directory)
+        try:
+            unpack_archive(f"{parent_directory}.zip",worker_directory)
+        except:
+            breakpoint()
         os.remove(f"{parent_directory}.zip")
         
         PopulationAnalysis__Warren__BaderBadelf().run_cloud(
