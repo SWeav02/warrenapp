@@ -7,7 +7,7 @@ from pathlib import Path
 from warrenapp.workflows.population_analysis.bader_badelf import PopulationAnalysis__Warren__BaderBadelf
 from simmate.database import connect
 from simmate.database.workflow_results import StaticEnergy
-from shutil import unpack_archive, make_archive
+from shutil import unpack_archive, make_archive, rmtree
 import os
 from simmate.engine import Workflow
 
@@ -34,3 +34,4 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
             source = None,
             )
         make_archive(f"{parent_directory}","zip")
+        rmtree(parent_directory)
