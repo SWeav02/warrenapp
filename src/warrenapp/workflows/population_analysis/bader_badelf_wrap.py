@@ -27,7 +27,7 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
         unpack_archive(f"{parent_directory}.zip",worker_directory)
         os.remove(f"{parent_directory}.zip")
         
-        PopulationAnalysis__Warren__BaderBadelf().run_cloud(
+        PopulationAnalysis__Warren__BaderBadelf().run(
             structure=structure,
             directory=static_directory,
             find_empties=True,
