@@ -49,7 +49,7 @@ def get_badelf_radius(neigh: list, lattice: dict, site_pos: dict, grid):
     min_elf = get_line_frac_min_rough(elf_values, rough_partitioning=True)
 
     # convert the minimum in the ELF back into a position in the voxel grid
-    min_pos_vox = get_position_from_min(min_elf[0], site_pos, neigh_pos)
+    min_pos_vox = get_position_from_min(min_elf[2], site_pos, neigh_pos)
 
     """ a point and normal vector describe a plane
     a(x-x1) + b(y-y1) + c(z-z1) = 0 
