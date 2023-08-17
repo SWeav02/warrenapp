@@ -162,7 +162,11 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             )
             # fill min_dist dictionary using the smallest partitioning radius
             if site not in electride_sites:
-                results_min_dist[site] = results[site][0]["radius"]
+                radii = []
+                for neighbor in results[site].values():
+                    radii.append(neighbor["radius"])
+                min_radii = min(radii)
+                results_min_dist[site] = min_radii
             elif site in electride_sites:
                 results_min_dist[site] = 0
             # create empty dictionary for other results that haven't been found yet
