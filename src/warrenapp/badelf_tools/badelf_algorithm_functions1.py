@@ -971,6 +971,7 @@ def get_voxels_site(
     get_matching_site function, but also checks other possible symmetric locations
     of each site.
     """
+    sites = []
     if site not in electride_sites:
         for t, u, v in permutations:
             new_pos = [x + t, y + u, z + v]
@@ -979,8 +980,15 @@ def get_voxels_site(
             # The site can't return as an electride site as we don't include
             # electride sites in the partitioning results
             if site is not None:
-                break
-    return site
+                # break
+                sites.append(site)
+    if len(sites) > 1:
+        print("more than one possible site detected")
+        return sites[0]
+    elif len(sites) == 1:
+        return sites[0]
+    else:
+        return site
 
 
 def get_voxels_site_dask(

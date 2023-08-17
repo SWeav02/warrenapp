@@ -21,7 +21,7 @@ from dask.distributed import Client, LocalCluster
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
-from warrenapp.badelf_tools.badelf_algorithm_functions import (
+from warrenapp.badelf_tools.badelf_algorithm_functions1 import (
     get_26_neighbors,
     get_charge_density_grid,
     get_electride_sites,
