@@ -19,6 +19,7 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial import ConvexHull
 from simmate.toolkit import Structure
 
+
 ###############################################################################
 # This module defines functions that are used in the warren lab badelf
 # algorithm
@@ -61,7 +62,8 @@ def get_voxel_from_frac(site, lattice):
 
     grid_size = lattice["grid_size"]
     frac = lattice["coords"][site]
-    voxel_pos = [a * b + 1 for a, b in zip(grid_size, frac)]
+    # np.format_float_positional((a * b + 1), precision=6, unique=False, fractional=False, trim='k')
+    voxel_pos = [(a * b + 1) for a, b in zip(grid_size, frac)]
     # voxel positions go from 1 to (grid_size + 0.9999)
     return np.array(voxel_pos)
 
@@ -567,9 +569,9 @@ def get_plane_sign(point, unit_vector, site_pos, lattice):
     x1, y1, z1 = point
     value_of_plane_equation = a * (x - x1) + b * (y - y1) + c * (z - z1)
     # get the distance of the point from the plane with some allowance of error.
-    if value_of_plane_equation > 1e-6:
+    if value_of_plane_equation > 1e-1:
         return "positive", abs(value_of_plane_equation)
-    elif value_of_plane_equation < -1e-6:
+    elif value_of_plane_equation < -1e-1:
         return "negative", abs(value_of_plane_equation)
     else:
         return "zero", abs(value_of_plane_equation)
@@ -634,7 +636,7 @@ def get_site_neighbor_results_rough(
 
     # convert this voxel grid_pos back into the real_space
     plane_point = get_real_from_vox(elf_min_vox, lattice)
-
+    
     # get the plane perpendicular to the position.
     plane_vector = get_unit_vector(site_pos, neigh_pos, lattice)
 
@@ -889,21 +891,21 @@ def get_matching_site(pos, results, lattice, max_distance):
     Determines which atomic site a point belongs to.
     """
     # Iterate over each site in the lattice
+    sites = []
     for site, neighs in results.items():
         matched = True
         # Iterate through each neighbor
         for neigh, values in neighs.items():
             # get the minimum point and normal vector which define the plane
             # seperating the sites.
-            try:
-                point = values["real_min_point"]
-            except:
-                breakpoint()
+
+            point = values["real_min_point"]
+            
             normal_vector = values["normal_vector"]
             # If a voxel is on the same side of the plane as the site, then they
             # should have the same sign when their coordinates are plugged into
             # the plane equation. We already have the sites sign stored here
-            expected_sign = values["sign"]
+            # expected_sign = values["sign"]
 
             # use plane equation to find sign
             sign, distance = get_plane_sign(point, normal_vector, pos, lattice)
@@ -913,16 +915,24 @@ def get_matching_site(pos, results, lattice, max_distance):
             # on to the next one after setting matched to false. We also check
             # to see if the voxel is possibly sliced by the plane. If it is we
             # want to seperate that charge later so we leave it here.
-            if sign != expected_sign or distance <= max_distance:
+            if sign != "negative" or distance <= max_distance:
                 # print(expected_sign,sign)
                 matched = False
                 break
         # if after looping through all neighbors we have matched every site,
         # then this is the correct site.
         if matched == True:
+            sites.append(site)
             # print(site, neigh, sign, expected_sign, distance)
-            return site
-    return
+            # return site
+    if len(sites) == 1:
+        return sites[0]
+    elif len(sites) == 0:
+        return
+    else:
+        print("multiple sites found for one location")
+        return sites[0]
+    # return
 
 
 def get_electride_sites(
