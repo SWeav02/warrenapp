@@ -280,6 +280,25 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             )
             # run site search and save as pandas dataframe
             pdf = ddf.compute()
+            
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # I've made it so that if a voxel is found to have multiple sites at
+            # one transformation it will be stored as -1 in the pdf and if it is
+            # found to have multiple sites at more than one transformation it will
+            # return -2. The -1 takes priority over -2 as I view it as a more
+            # serious issue because I know it should never be possible. Here I
+            # need to sort these out and count them before I move on.
+            # Count the number of instances where this occurs
+            multi_site_same_trans = pdf['site'].value_counts()[-1]
+            multi_site_trans = pdf['site'].value_counts()[-2]
+            # If it occurs write a file to save the number of instances
+            if multi_site_same_trans != 0 or multi_site_trans != 0:
+                with open(directory / "same_site_voxel_count.txt") as file:
+                    file.write(f"{multi_site_same_trans}/n{multi_site_trans}")
+            # Replace all instances with numpy nan object so that the rest of the
+            # alg doesn't break.
+            pdf["site"].replace([-1,-2], np.nan, inplace=True)
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             # Group the results by site. Sum the charges and count the total number
             # of voxels for each site. Apply charges and volumes to dictionaries.

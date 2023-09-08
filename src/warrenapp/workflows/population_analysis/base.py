@@ -318,7 +318,7 @@ class VaspBaderBadElfBase(Workflow):
     are built from.
     """
 
-    static_energy_prebadelf: Workflow = None  # Must be defined in inhering class
+    static_energy_prebadelf: Workflow = None  # Must be defined in inheriting class
     use_database = False
 
     @classmethod
@@ -327,7 +327,7 @@ class VaspBaderBadElfBase(Workflow):
         structure: Structure,
         command: str = None,
         source: dict = None,
-        find_empties: bool = False,
+        find_empties: bool = True,
         directory: Path = None,
         min_charge: float = 0.15,
         badelf_alg: str = "voronoi",

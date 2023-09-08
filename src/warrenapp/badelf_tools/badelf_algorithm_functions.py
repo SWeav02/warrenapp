@@ -716,56 +716,63 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
 
         # get voxel position from fractional site
         site_pos = get_voxel_from_frac(site_index, lattice)
-        site_pos_real = get_real_from_vox(site_pos, lattice)
+        # site_pos_real = get_real_from_vox(site_pos, lattice)
         # iterate through each neighbor to the site
         for i, neigh in enumerate(neighs):
             site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
                 site_index, neigh, lattice, site_pos, grid, rough_partitioning
             )
-        # Finally, we want to figure out which of these planes are necessary to
-        # completely partition our point from the surrounding atoms. To do this
-        # we define a line segment between the point and the closest point on the
-        # plane (the minimum of the ELF). Then we check if any other planes intersect
-        # this line segment. If they don't then the plane belongs to the partitioning
-        # set. If they do, then the plane is thrown out.
-        #!!! SPEED UP: We should only have to do this for one neigh in each set
-        # of distances. Others with the same distance would automatically be included
-        # Remove duplicates from the df
-        plane_distances = site_df["distance"].drop_duplicates().reset_index(drop=True)
-        # create a list to store the final set of neighbors
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # # This is an old algorithm that didn't incorporate the correct planes
+        # # and caused errors in many structures. For now I am treating this
+        # # very rigorously and just using 26 partitioning planes now matter
+        # # that atom or system. I will update this in the future.
+        # # Finally, we want to figure out which of these planes are necessary to
+        # # completely partition our point from the surrounding atoms. To do this
+        # # we define a line segment between the point and the closest point on the
+        # # plane (the minimum of the ELF). Then we check if any other planes intersect
+        # # this line segment. If they don't then the plane belongs to the partitioning
+        # # set. If they do, then the plane is thrown out.
+        # #!!! SPEED UP: We should only have to do this for one neigh in each set
+        # # of distances. Others with the same distance would automatically be included
+        # # Remove duplicates from the df
+        # plane_distances = site_df["distance"].drop_duplicates().reset_index(drop=True)
+        # # create a list to store the final set of neighbors
         important_neighs = pd.DataFrame(columns=columns)
         for [index, row] in site_df.iterrows():
+                        
             # if the plane belongs to the set that is closest to the atom,
             # automatically add this neighbor to the final set
-            if row["distance"] == plane_distances[0]:
+            # if row["distance"] == plane_distances[0]:
+            #     important_neighs.loc[len(important_neighs)] = row
+            # else:
+            #     # if the plane is not in this first set, check if any other planes
+            #     # intercept the line between it and the atom
+            #     point1 = row["plane_point"]
+            #     intercept = False
+            #     for [neigh_index, neigh_row] in site_df.iterrows():
+            #         if neigh_index != index:
+            #             plane_point = neigh_row["plane_point"]
+            #             plane_vector = neigh_row["plane_vector"]
+            #             intersection = get_vector_plane_intersection(
+            #                 site_pos_real,
+            #                 point1,
+            #                 plane_point,
+            #                 plane_vector,
+            #                 allow_point_intercept=True,
+            #             )
+            #             # print(intersection)
+            #             # if the line is not intersected, this plane is is part
+            #             # of the partitioning set and we pass. Otherwise we
+            #             # break and move on.
+            #             if intersection is None:
+            #                 pass
+            #             else:
+            #                 intercept = True
+            #                 break
+                # if intercept == False:
+                #     important_neighs.loc[len(important_neighs)] = row
                 important_neighs.loc[len(important_neighs)] = row
-            else:
-                # if the plane is not in this first set, check if any other planes
-                # intercept the line between it and the atom
-                point1 = row["plane_point"]
-                intercept = False
-                for [neigh_index, neigh_row] in site_df.iterrows():
-                    if neigh_index != index:
-                        plane_point = neigh_row["plane_point"]
-                        plane_vector = neigh_row["plane_vector"]
-                        intersection = get_vector_plane_intersection(
-                            site_pos_real,
-                            point1,
-                            plane_point,
-                            plane_vector,
-                            allow_point_intercept=True,
-                        )
-                        # print(intersection)
-                        # if the line is not intersected, this plane is is part
-                        # of the partitioning set and we pass. Otherwise we
-                        # break and move on.
-                        if intersection is None:
-                            pass
-                        else:
-                            intercept = True
-                            break
-                if intercept == False:
-                    important_neighs.loc[len(important_neighs)] = row
         rough_partition_results.append(important_neighs)
 
     if rough_partitioning:
@@ -887,6 +894,12 @@ def get_matching_site(pos, results, lattice, max_distance):
     """
     Determines which atomic site a point belongs to.
     """
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # I've had a bug in the past where more than one site is found for a single
+    # voxel. As such, I'm going to temporarily make this function search all
+    # sites in case it finds more than one.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    sites = []
     # Iterate over each site in the lattice
     for site, neighs in results.items():
         matched = True
@@ -901,8 +914,8 @@ def get_matching_site(pos, results, lattice, max_distance):
             normal_vector = values["normal_vector"]
             # If a voxel is on the same side of the plane as the site, then they
             # should have the same sign when their coordinates are plugged into
-            # the plane equation. We already have the sites sign stored here
-            expected_sign = values["sign"]
+            # the plane equation (negative).
+            # expected_sign = values["sign"]
 
             # use plane equation to find sign
             sign, distance = get_plane_sign(point, normal_vector, pos, lattice)
@@ -912,16 +925,30 @@ def get_matching_site(pos, results, lattice, max_distance):
             # on to the next one after setting matched to false. We also check
             # to see if the voxel is possibly sliced by the plane. If it is we
             # want to seperate that charge later so we leave it here.
-            if sign != expected_sign or distance <= max_distance:
+            if sign != "negative" or distance <= max_distance:
                 # print(expected_sign,sign)
                 matched = False
                 break
+        if matched == True:
+            sites.append(site)
+            # print(site, neigh, sign, expected_sign, distance)
+            # return site
+    if len(sites) == 1:
+        return sites[0]
+    elif len(sites) == 0:
+        return
+    else:
+        print("Multiple sites found for one location")
+        # with open("multi_site_in_one_trans.csv", "a") as file:
+        #     file.write(f"{voxel_coord},{trans},{pos},{get_real_from_vox(pos,lattice)},{sites}\n")
+        # return sites[0]
+        return -1
         # if after looping through all neighbors we have matched every site,
         # then this is the correct site.
-        if matched == True:
-            # print(site, neigh, sign, expected_sign, distance)
-            return site
-    return
+    #     if matched == True:
+    #         # print(site, neigh, sign, expected_sign, distance)
+    #         return site
+    # return
 
 
 def get_electride_sites(
@@ -970,6 +997,16 @@ def get_voxels_site(
     get_matching_site function, but also checks other possible symmetric locations
     of each site.
     """
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # I've had a bug in the past where one voxel returns multiple sites after
+    # being translated. I'm going to make this function temporarily go through
+    # all sites in case the bug still exists. It will return -1 if the multiple
+    # sites are found at the same transformation and it will return -2 if multiple
+    # are found across different transformations.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    sites = []
+    translations = []
+    real_pos = []
     if site not in electride_sites:
         for t, u, v in permutations:
             new_pos = [x + t, y + u, z + v]
@@ -977,8 +1014,29 @@ def get_voxels_site(
             # site returns none if no match, otherwise gives a number
             # The site can't return as an electride site as we don't include
             # electride sites in the partitioning results
-            if site is not None:
+            if site == -1:
+                # If the site returns -1, this means multiple sites were found
+                # at one transformation which should never happen. I want this
+                # function to return -1 so I can count how often this happens
+                # if at all.
+                sites = []
+                sites.append(-1)
                 break
+            elif site is not None:
+                sites.append(site)
+                # break
+    if len(sites) > 1:
+        # if the length of sites is greater than 1 that means it found more than
+        # one site at different transformations. I want to return -2 so I can
+        # keep track of how often this bug occurs.
+        return -2
+    elif len(sites) == 1:
+        # there is only one site found so we just return it.
+        return sites[0]
+    else:
+        # there wasn't any site found so we don't return our site variable which
+        # is None
+        return site
     return site
 
 
@@ -1036,7 +1094,7 @@ def get_matching_site_with_plane(vert_coord, results, lattice):
             # If a vertex is on the same side of the plane as the site, then they
             # should have the same sign when their coordinates are plugged into
             # the plane equation. We already have the sites sign stored here
-            expected_sign = values["sign"]
+            # expected_sign = values["sign"]
 
             # use the plane equation to find sign
             sign, distance = get_plane_sign(point, normal_vector, vert_coord, lattice)
@@ -1047,7 +1105,7 @@ def get_matching_site_with_plane(vert_coord, results, lattice):
             # if sign == "zero":
             #     pass
             # if the sign doesn't match this is the wrong site
-            if sign != expected_sign:
+            if sign != "negative":
                 matched = False
                 break
 
