@@ -18,6 +18,7 @@ from pymatgen.analysis.local_env import CrystalNN
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial import ConvexHull
 from simmate.toolkit import Structure
+import random
 
 
 ###############################################################################
@@ -555,6 +556,7 @@ def get_unit_vector(site_pos, neigh_pos, lattice):
     normal_vector = [(b - a) for a, b in zip(real_site_pos, real_neigh_pos)]
     unit_vector = [(x / np.linalg.norm(normal_vector)) for x in normal_vector]
     return np.array(unit_vector)
+    # return np.array(normal_vector)
 
 
 def get_plane_sign(point, unit_vector, site_pos, lattice):
@@ -569,9 +571,28 @@ def get_plane_sign(point, unit_vector, site_pos, lattice):
     x1, y1, z1 = point
     value_of_plane_equation = a * (x - x1) + b * (y - y1) + c * (z - z1)
     # get the distance of the point from the plane with some allowance of error.
-    if value_of_plane_equation > 1e-1:
+    if value_of_plane_equation > 1e-6:
         return "positive", abs(value_of_plane_equation)
-    elif value_of_plane_equation < -1e-1:
+    elif value_of_plane_equation < -1e-6:
+        return "negative", abs(value_of_plane_equation)
+    else:
+        return "zero", abs(value_of_plane_equation)
+
+def get_plane_sign_real(point, unit_vector, site_coord, lattice):
+    """
+    Gets the sign associated with a point compared with a plane. This should
+    be negative for an atoms position compared with a plane dividing it from
+    other atoms.
+    """
+    # get all of the points in cartesian coordinates
+    x, y, z = site_coord
+    a, b, c = unit_vector
+    x1, y1, z1 = point
+    value_of_plane_equation = a * (x - x1) + b * (y - y1) + c * (z - z1)
+    # get the distance of the point from the plane with some allowance of error.
+    if value_of_plane_equation > 1e-6:
+        return "positive", abs(value_of_plane_equation)
+    elif value_of_plane_equation < -1e-6:
         return "negative", abs(value_of_plane_equation)
     else:
         return "zero", abs(value_of_plane_equation)
@@ -720,11 +741,13 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
         # get voxel position from fractional site
         site_pos = get_voxel_from_frac(site_index, lattice)
         site_pos_real = get_real_from_vox(site_pos, lattice)
-        # iterate through each neighbor to the site
+        # iterate through each neighbor to the site and add to dataframe
         for i, neigh in enumerate(neighs):
             site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
                 site_index, neigh, lattice, site_pos, grid, rough_partitioning
             )
+        # sort dataframe by distance
+        site_df = site_df.sort_values(by="distance")
         # Finally, we want to figure out which of these planes are necessary to
         # completely partition our point from the surrounding atoms. To do this
         # we define a line segment between the point and the closest point on the
@@ -744,30 +767,53 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
                 important_neighs.loc[len(important_neighs)] = row
             else:
                 # if the plane is not in this first set, check if any other planes
-                # intercept the line between it and the atom
+                # that have already been found intercept the line between it and the atom
+        #         point1 = row["plane_point"]
+        #         intercept = False
+        #         for [neigh_index, neigh_row] in site_df.iterrows():
+        #             if neigh_index != index:
+        #                 plane_point = neigh_row["plane_point"]
+        #                 plane_vector = neigh_row["plane_vector"]
+        #                 intersection = get_vector_plane_intersection(
+        #                     site_pos_real,
+        #                     point1,
+        #                     plane_point,
+        #                     plane_vector,
+        #                     allow_point_intercept=True,
+        #                 )
+        #                 # print(intersection)
+        #                 # if the line is not intersected, this plane is part
+        #                 # of the partitioning set and we pass. Otherwise we
+        #                 # break and move on.
+        #                 if intersection is None:
+        #                     pass
+        #                 else:
+        #                     intercept = True
+        #                     break
+        #                 #!!!! temporarily allowing all through to visualize all 26 neighs
+        #                     # pass
+        #         if intercept == False:
+        #             important_neighs.loc[len(important_neighs)] = row
+        # rough_partition_results.append(important_neighs)
+            # if the plane is not in the set of planes that are closest, check if
+            # its point is "underneath" all of the other already discovered planes
+            # If it is, then it should be part of the partitioning cell?
                 point1 = row["plane_point"]
-                intercept = False
-                for [neigh_index, neigh_row] in site_df.iterrows():
-                    if neigh_index != index:
-                        plane_point = neigh_row["plane_point"]
-                        plane_vector = neigh_row["plane_vector"]
-                        intersection = get_vector_plane_intersection(
-                            site_pos_real,
-                            point1,
-                            plane_point,
-                            plane_vector,
-                            allow_point_intercept=True,
-                        )
-                        # print(intersection)
-                        # if the line is not intersected, this plane is is part
-                        # of the partitioning set and we pass. Otherwise we
-                        # break and move on.
-                        if intersection is None:
-                            pass
-                        else:
-                            intercept = True
-                            break
-                if intercept == False:
+                under_planes = True
+                for neigh_index, neigh_row in important_neighs.iterrows():
+                    plane_point = neigh_row["plane_point"]
+                    plane_vector = neigh_row["plane_vector"]
+                    sign, distance = get_plane_sign_real(plane_point, plane_vector, point1, lattice)
+                    # print(sign)
+                    
+                    if sign == "negative" or sign == "zero":
+                        pass
+                    else:
+                        # testing if all 26 planes are allowed
+                        under_planes = False
+                        break
+                        # pass
+                if under_planes == True:
                     important_neighs.loc[len(important_neighs)] = row
         rough_partition_results.append(important_neighs)
 
@@ -886,7 +932,7 @@ def get_max_voxel_dist(lattice):
     return max_distance
 
 
-def get_matching_site(pos, results, lattice, max_distance):
+def get_matching_site(pos, results, lattice, max_distance, voxel_coord, trans):
     """
     Determines which atomic site a point belongs to.
     """
@@ -931,7 +977,10 @@ def get_matching_site(pos, results, lattice, max_distance):
         return
     else:
         print("multiple sites found for one location")
-        return sites[0]
+        # with open("multi_site_in_one_trans.csv", "a") as file:
+        #     file.write(f"{voxel_coord},{trans},{pos},{get_real_from_vox(pos,lattice)},{sites}\n")
+        # return sites[0]
+        return None
     # return
 
 
@@ -982,22 +1031,67 @@ def get_voxels_site(
     of each site.
     """
     sites = []
+    translations = []
+    real_pos = []
     if site not in electride_sites:
         for t, u, v in permutations:
             new_pos = [x + t, y + u, z + v]
-            site: int = get_matching_site(new_pos, results, lattice, max_distance)
+            loc_real = get_real_from_vox(new_pos, lattice)
+            site: int = get_matching_site(new_pos, results, lattice, max_distance, [x,y,z], [t,u,v])
             # site returns none if no match, otherwise gives a number
             # The site can't return as an electride site as we don't include
             # electride sites in the partitioning results
             if site is not None:
                 # break
                 sites.append(site)
+                translations.append([t,u,v])
+                real_pos.append(loc_real)
+    # There are some situations where a voxel can be assigned to more than one
+    # site. For example, an atoms partitioning planes may encapsulate more than
+    # one corner of a cell, meaning the corresponding voxel will be assigned to
+    # the same site more than once. In other situations, the voxels may be
+    # assigned to two different sites. So far I haven't figured out why, but it
+    # doesn't seem to be an error in the code. However, in all cases that I've
+    # checked, these sites can be assigned to an atom without being translated
+    # at all.
     if len(sites) > 1:
-        print("more than one possible site detected")
-        return -1
+        # if the length of sites is greater than 1 we want to figure out which
+        # scenario it is
+        if len(set(sites)) == 1:
+            # there is only one site, so we return that one
+            return sites[0]
+        else:
+            print("multiple sites found")
+            # there is more than one site, so we return the one with perm [0,0,0]
+            
+            # return None
+            try:
+                # find the distance of each translated site from the site it
+                # was assigned to. Whichever distance is shorter, give that voxel
+                # to that site.
+                distances = []
+                for i, point in enumerate(sites):
+                    voxel_coord = loc_real[i]
+                    site_coord = get_real_from_frac(lattice["coords"][i])
+                    distance = math.dist(voxel_coord, site_coord)
+                    distances.append(distance)
+                min_dist = min(distances)
+                site_index = distances.index(min_dist)
+                
+                # site_index = translations.index([0,0,0])
+                
+                # site_index = random.randint(0, len(sites))
+                return sites[site_index]
+            except:
+                for i, point in enumerate(sites):
+                    with open("multi-site-voxels.csv", "a") as file:
+                        file.write(f"{point},{translations[i]},{x,y,z},{real_pos[i]}\n")
+                return None
     elif len(sites) == 1:
+        # there is only one site found so we just return it.
         return sites[0]
     else:
+        # there likely wasn't any site found so we don't return it
         return site
 
 
@@ -1269,14 +1363,17 @@ def get_vector_plane_intersection(
     KAB = np.dot(AB, AB)
     # There are five possible scenarios.
     if KAC < -1e-8 or KAC > KAB + 1e-8:
+    # if KAC < -1e-5 or KAC > KAB + 1e-5:
         # the point is outside the line
         return None
-    elif KAC == 0 or KAC == KAB:
-        # The point is at point0 or point1
-        if allow_point_intercept:
-            return intersection_point
-        else:
-            return None
+    # elif KAC == 0 or KAC == KAB:
+    #     # The point is at point0 or point1
+    #     if allow_point_intercept:
+    #         #!!!! Altered for testing
+    #         # return intersection_point
+    #         return None
+    #     else:
+    #         return None
     else:
         # The point is between point0 and point1
         # print(point0, point1)
