@@ -289,8 +289,12 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             # serious issue because I know it should never be possible. Here I
             # need to sort these out and count them before I move on.
             # Count the number of instances where this occurs
-            multi_site_same_trans = pdf['site'].value_counts()[-1]
-            multi_site_trans = pdf['site'].value_counts()[-2]
+            try:
+                multi_site_same_trans = pdf['site'].value_counts()[-1]
+                multi_site_trans = pdf['site'].value_counts()[-2]
+            except:
+                multi_site_same_trans = 0
+                multi_site_trans = 0
             # If it occurs write a file to save the number of instances
             if multi_site_same_trans != 0 or multi_site_trans != 0:
                 with open(directory / "same_site_voxel_count.txt") as file:
