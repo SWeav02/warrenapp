@@ -426,7 +426,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # the sites, and may be normal for the vertices if they are split by a
         # plane.
         with open(directory / "same_site_voxel_count.txt", "w") as file:
-            file.write(f"{structure.formula},{structure.get_space_group_info()[0]},{directory},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}")
+            file.write(f"{structure.formula},{structure.get_space_group_info()[0]},{str(directory.absolute())},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}")
         
 
         ###############################################################################
