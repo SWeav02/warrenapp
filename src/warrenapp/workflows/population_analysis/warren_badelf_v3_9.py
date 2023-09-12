@@ -295,10 +295,11 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             except:
                 multi_site_same_trans = 0
                 multi_site_trans = 0
-            # If it occurs write a file to save the number of instances
-            if multi_site_same_trans != 0 or multi_site_trans != 0:
-                with open(directory / "same_site_voxel_count.txt") as file:
-                    file.write(f"{multi_site_same_trans}/n{multi_site_trans}")
+            # I'm going to save these values towards the end of this script in
+            # as a file with a csv format.
+            # if multi_site_same_trans != 0 or multi_site_trans != 0:
+            #     with open(directory / "same_site_voxel_count.txt", "w") as file:
+            #         file.write(f"{np.prod(lattice['grid_size'])}\n{multi_site_same_trans}\n{multi_site_trans}")
             # Replace all instances with numpy nan object so that the rest of the
             # alg doesn't break.
             pdf["site"].replace([-1,-2], np.nan, inplace=True)
@@ -316,7 +317,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             # nearby voxels to see which site is the most common and assign them to that
             # site. To do this we essentially repeat the previous several steps but with
             # the new site searching method.
-
+            
             # find where the site search returned None
             near_plane_index = np.where(pdf["site"].isnull())
             # We need to convert Nan in pdf to None type objects for when we are
@@ -348,13 +349,33 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
 
             # compute and return to pandas
             near_plane_pdf = near_plane_ddf.compute()
-
+        
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        #I've made it so that if some vertices are found multiple
+        #times, it adds an additional site labeled as -1 or -2. 
+        #This way I can count how many of them are doing this while still allowing
+        #them to be treated as not belonging to any site.
+        vert_multi_site_same_trans = 0
+        vert_multi_site = 0
+        multi_site_no_plane = 0
         for row in near_plane_pdf.iterrows():
             try:
                 for site in row[1][4]:
+                    if site == -1:
+                        vert_multi_site_same_trans += 1
+                        continue
+                    elif site == -2:
+                        vert_multi_site += 1
+                        continue
+                    elif site == -3:
+                        multi_site_no_plane += 1
+                        continue
+                    # for each site, multiply the fraction of the site times the charge
                     results_charge[site] += row[1][4][site] * row[1][3]
                     results_volume[site] += row[1][4][site] * voxel_volume
             except:
+                if row[1][4] is not None:
+                    print(f"{row[1][4]}")
                 pass
         # Some sites will be returned as none because they are being split
         # by more than one bordering plane. We handle these with less accuracy
@@ -390,6 +411,23 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         for site, charge in results_charge.items():
             results_charge[site] = charge / (a * b * c)
         total_charge = sum(results_charge.values())
+        
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # Now I need to save the number of problem voxels in a report document.
+        # I think it would be most useful to do this in a csv style format so
+        # that I can easily take in the data later. I'm going to save all of the
+        # problems for every situation. The columns will be as follows:
+        # formula, spacegroup label, directory, total voxel count
+        # voxel centers at same transformation, voxel centers at different transformations,
+        # voxel vertices at same transformation, voxel vertices at different transfromations,
+        # voxels with multiple sites at vertices but no plane intersection.
+        # All of these except the last group refer to voxels with issues related
+        # to being assigned to more than one site. This is a bigger issue for
+        # the sites, and may be normal for the vertices if they are split by a
+        # plane.
+        with open(directory / "same_site_voxel_count.txt", "w") as file:
+            file.write(f"{structure.formula},{structure.get_space_group_info()[0]},{directory},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}")
+        
 
         ###############################################################################
         # Save information into ACF.dat like file
