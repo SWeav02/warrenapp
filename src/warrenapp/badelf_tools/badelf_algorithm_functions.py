@@ -1185,7 +1185,7 @@ def get_matching_site_with_plane(vert_coord, results, lattice):
     elif len(sites) == 0:
         return
     else:
-        print("Multiple sites found for one vertex location")
+        # print("Multiple sites found for one vertex location")
         # with open("multi_site_in_one_trans.csv", "a") as file:
         #     file.write(f"{voxel_coord},{trans},{pos},{get_real_from_vox(pos,lattice)},{sites}\n")
         # return sites[0]
@@ -1607,7 +1607,7 @@ def get_site_volume_ratio(x, y, z, results, lattice, permutations, voxel_volume)
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # I'm having this problem return as -3 so that I can keep track of it
             site_vol_frac[-3] = float(0)
-            print(f"there's a problem: {vox_coord}")
+            print(f"there's a problem assigning site: {vox_coord}")
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Check that there is only one plane that is close to all of the vertices.
         # If so, our voxel is being split by a single plane.
