@@ -35,8 +35,12 @@ from warrenapp.badelf_tools.badelf_algorithm_functions import (
     get_voxels_site_dask,
     get_voxels_site_multi_plane,
     get_voxels_site_volume_ratio_dask,
+    get_voxels_site_nearest,
 )
 from warrenapp.models import WarrenPopulationAnalysis
+from pymatgen.io.vasp import Elfcar
+from pymatgen.io.vasp import Poscar
+from pymatgen.io.vasp import Chgcar
 
 ###############################################################################
 # Now that we have functions defined, it's time to define the main workflow
@@ -56,6 +60,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         partition_file: str = "ELFCAR",
         empty_partition_file: str = "ELFCAR_empty",
         charge_file: str = "CHGCAR",
+        print_atom_voxels: bool = False,
         **kwargs,
     ):
         t0 = time.time()
@@ -313,6 +318,9 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             for site in results_charge:
                 results_charge[site] = pdf_grouped_charge[site]
                 results_volume[site] = pdf_grouped_voxels[site] * voxel_volume
+            # if printed voxels are requested, update all_coords dataframe
+            if print_atom_voxels:
+                all_charge_coords["site"] = pdf["site"]
             # some of the voxels will not return a site. For these we need to check the
             # nearby voxels to see which site is the most common and assign them to that
             # site. To do this we essentially repeat the previous several steps but with
@@ -373,6 +381,11 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                     # for each site, multiply the fraction of the site times the charge
                     results_charge[site] += row[1][4][site] * row[1][3]
                     results_volume[site] += row[1][4][site] * voxel_volume
+                if print_atom_voxels:
+                    sites = row[1][4]
+                    max_site_frac = max(sites.values())
+                    max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
+                    all_charge_coords.loc[row[0], "site"] = max_site
             except:
                 if row[1][4] is not None:
                     print(f"{row[1][4]}")
@@ -404,13 +417,60 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 for site in row[1][4]:
                     results_charge[site] += row[1][4][site] * row[1][3]
                     results_volume[site] += row[1][4][site] * voxel_volume
+                if print_atom_voxels:
+                    sites = row[1][4]
+                    max_site_frac = max(sites.values())
+                    max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
+                    all_charge_coords.loc[row[0], "site"] = max_site
         else:
             print("no voxels intercepted by more than one plane")
+        
+        # After all other parts have run, sometimes the algorithm still has some
+        # voxels that are unassigned. The easiest way to handle these is to give
+        # them to the closest atom.
+        # get dataframe of all missing voxels
+        missing_voxel_index = np.where(multi_plane_pdf["sites"].isnull())
+        multi_plane_pdf = multi_plane_pdf.replace({np.nan: None})
+        missing_voxel_pdf = multi_plane_pdf.iloc[missing_voxel_index].drop(columns=["sites"])
+        if len(missing_voxel_pdf) > 0:
+            perc_voxels = (len(missing_voxel_pdf)/np.prod(lattice["grid_size"]))*100
+            print(f"""{perc_voxels}% of voxels could not be assigned by base
+            algorithm. Remaining voxels will be assigned by closest atom
+                  """)
+            
+            missing_voxel_pdf["sites"] = missing_voxel_pdf.apply(
+                lambda x: get_voxels_site_nearest(
+                    x["x"], 
+                    x["y"], 
+                    x["z"], 
+                    permutations=permutations, 
+                    lattice=lattice,
+                    ),
+                axis = 1,
+                )
+            # Group the results by site. Sum the charges and count the total number
+            # of voxels for each site. Apply charges and volumes to dictionaries.
+            missing_voxel_pdf_grouped = missing_voxel_pdf.groupby(by="sites")
+            missing_voxel_pdf_grouped_charge = missing_voxel_pdf_grouped["chg"].sum()
+            missing_voxel_pdf_grouped_voxels = missing_voxel_pdf_grouped["sites"].size()
+            for site in results_charge:
+                if site in missing_voxel_pdf_grouped_charge.index.to_list():
+                    results_charge[site] = missing_voxel_pdf_grouped_charge[site]
+                    results_volume[site] = missing_voxel_pdf_grouped_voxels[site] * voxel_volume
+            
+            if print_atom_voxels:
+                for row in missing_voxel_pdf.iterrows():
+                    site = row[1]["sites"]
+                    all_charge_coords.loc[row[0], "site"] = site
+        else:
+            print("All voxels assigned.")
+        
         # divide charge by volume to get true charge
         # this is a vasp convention
         for site, charge in results_charge.items():
             results_charge[site] = charge / (a * b * c)
         total_charge = sum(results_charge.values())
+        
         
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Now I need to save the number of problem voxels in a report document.
@@ -427,8 +487,45 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # plane.
         with open(directory / "same_site_voxel_count.txt", "w") as file:
             file.write(f"{structure.formula},{structure.get_space_group_info()[0]},{str(directory.absolute())},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}")
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         
-
+        #######################################################################
+        # Print atom voxels
+        #######################################################################
+        if print_atom_voxels:
+            # get poscar object
+            try:
+                poscar = Poscar(Structure.from_file(directory/"POSCAR_empty"))
+            except:
+                poscar = Poscar(structure)
+                
+            # iterate over each element in the empty lattice
+            for element in empty_lattice["elements"]:
+                # get list of site indices for each type of atom
+                site_indices = structure.indices_from_symbol(element)
+                # if "dummy" atom, replace string with e
+                if element == "He":
+                    element == "e"
+                # create an empty numpy array for the chgcar and elfcar
+                chgcar_data = np.zeros(lattice["grid_size"])
+                elfcar_data = np.zeros(lattice["grid_size"])
+                # iterate over all voxels and assign elf and charge values
+                # to numpy arrays
+                for row in all_charge_coords.iterrows():
+                    if row[1]["site"] in site_indices:
+                        x = int(row[1]["x"]-1)
+                        y = int(row[1]["y"]-1)
+                        z = int(row[1]["z"]-1)
+                        chgcar_data[x][y][z] = row[1]["chg"]
+                        elfcar_data[x][y][z] = grid[x][y][z]
+                
+                # create elfcar and chgcar objects and write to file
+                chgcar_data = {"diff": chgcar_data, "total": chgcar_data}
+                elfcar_data = {"diff": elfcar_data, "total": elfcar_data}
+                chgcar = Chgcar(poscar, chgcar_data)
+                elfcar = Elfcar(poscar, elfcar_data)
+                chgcar.write_file(f"CHGCAR_{element}")
+                elfcar.write_file(f"ELFCAR_{element}")
         ###############################################################################
         # Save information into ACF.dat like file
         ###############################################################################

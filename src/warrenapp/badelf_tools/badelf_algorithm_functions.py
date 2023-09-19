@@ -721,9 +721,17 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
         # site_pos_real = get_real_from_vox(site_pos, lattice)
         # iterate through each neighbor to the site
         for i, neigh in enumerate(neighs):
-            site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
-                site_index, neigh, lattice, site_pos, grid, rough_partitioning
-            )
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # Currently I have this passing errors because they showed up in
+            # mayenite.
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            try:
+                  site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
+                      site_index, neigh, lattice, site_pos, grid, rough_partitioning
+                  )
+            except:
+                  pass
+
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # # This is an old algorithm that didn't incorporate the correct planes
         # # and caused errors in many structures. For now I am treating this
@@ -1774,3 +1782,37 @@ def get_voxels_site_multi_plane(
         for site_index in site_count:
             site_frac[site_index] = site_count[site_index] / sum(site_count.values())
     return site_frac
+
+def get_voxels_site_nearest(
+    x,
+    y,
+    z,
+    permutations: list,
+    lattice: dict,
+):
+    """
+    This function finds the closest atom to a voxel.
+    """
+    # create lists to store site indices and distances
+    sites = []
+    distances = []
+    
+    # get lists of atom coordinates and site numbers
+    atom_coords = lattice["coords"]
+    atom_site_indices = [i for i in range(len(atom_coords))]
+    
+    for t, u, v in permutations:
+        new_idx = [x + t, y + u, z + v]
+        real_coord = get_real_from_vox(new_idx, lattice)
+        for site, coord in zip (atom_site_indices, atom_coords):
+            dist = math.dist(real_coord, coord)
+            sites.append(site)
+            distances.append(dist)
+    
+    # find the smallest distance
+    min_dist = min(distances)
+    # return the index associated with the smallest distance
+    return sites[distances.index(min_dist)]
+            
+            
+            
