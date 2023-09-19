@@ -669,9 +669,17 @@ def get_site_neighbor_results_fine(site_df, grid, lattice):
         site_pos = row[1]["site_pos"]
         neigh_pos = row[1]["neigh_pos"]
         # get the minimum position along the elf line
-        elf_min_index_new, elf_min_value_new, elf_min_frac_new = get_line_frac_min_fine(
-            elf_positions, elf_min_index, grid
-        )
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # This fails in mayenite in some cases so I'm letting it through for now.
+        # This just uses the rough partitioning instead of the fine in instances
+        # where it fails.
+        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        try:
+            elf_min_index_new, elf_min_value_new, elf_min_frac_new = get_line_frac_min_fine(
+                elf_positions, elf_min_index, grid
+            )
+        except:
+            continue
         # convert minimum in ELF line into voxel position
         elf_min_vox = get_position_from_min(elf_min_frac_new, site_pos, neigh_pos)
         # convert voxel position into real_space
@@ -845,6 +853,7 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
 def get_partitioning_fine(rough_partition_results, grid, lattice):
     results = {}
     for site_index, site_df in enumerate(rough_partition_results):
+        
         fine_site_df = get_site_neighbor_results_fine(site_df, grid, lattice)
         neigh_dict = {}
         for neigh_row in fine_site_df.iterrows():
