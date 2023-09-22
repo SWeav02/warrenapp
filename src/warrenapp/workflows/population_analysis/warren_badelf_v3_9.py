@@ -418,10 +418,15 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                     results_charge[site] += row[1][4][site] * row[1][3]
                     results_volume[site] += row[1][4][site] * voxel_volume
                 if print_atom_voxels:
-                    sites = row[1][4]
-                    max_site_frac = max(sites.values())
-                    max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
-                    all_charge_coords.loc[row[0], "site"] = max_site
+                    # If no sites are found, using the max function will through
+                    # an error. I just skip these instances here.
+                    try:
+                        sites = row[1][4]
+                        max_site_frac = max(sites.values())
+                        max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
+                        all_charge_coords.loc[row[0], "site"] = max_site
+                    except:
+                        continue
         else:
             print("no voxels intercepted by more than one plane")
         
@@ -429,7 +434,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # voxels that are unassigned. The easiest way to handle these is to give
         # them to the closest atom.
         # get dataframe of all missing voxels
-        missing_voxel_index = np.where(multi_plane_pdf["sites"].isnull())
+        missing_voxel_index = np.where(multi_plane_pdf["sites"] == {})
         multi_plane_pdf = multi_plane_pdf.replace({np.nan: None})
         missing_voxel_pdf = multi_plane_pdf.iloc[missing_voxel_index].drop(columns=["sites"])
         if len(missing_voxel_pdf) > 0:
@@ -455,8 +460,8 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             missing_voxel_pdf_grouped_voxels = missing_voxel_pdf_grouped["sites"].size()
             for site in results_charge:
                 if site in missing_voxel_pdf_grouped_charge.index.to_list():
-                    results_charge[site] = missing_voxel_pdf_grouped_charge[site]
-                    results_volume[site] = missing_voxel_pdf_grouped_voxels[site] * voxel_volume
+                    results_charge[site] += missing_voxel_pdf_grouped_charge[site]
+                    results_volume[site] += missing_voxel_pdf_grouped_voxels[site] * voxel_volume
             
             if print_atom_voxels:
                 for row in missing_voxel_pdf.iterrows():
@@ -505,7 +510,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 site_indices = structure.indices_from_symbol(element)
                 # if "dummy" atom, replace string with e
                 if element == "He":
-                    element == "e"
+                    element = "e"
                 # create an empty numpy array for the chgcar and elfcar
                 chgcar_data = np.zeros(lattice["grid_size"])
                 elfcar_data = np.zeros(lattice["grid_size"])
