@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from simmate.apps.vasp.error_handlers import (
+from simmate.apps.vasp.error_handlers import (  # Frozen,
     Brions,
     Brmix,
     Edddav,
     Eddrmm,
     Edwav,
     ElfKpar,
-#    Frozen,
     IncorrectShift,
     IncorrectSmearing,
     InsufficientBands,
@@ -189,7 +188,7 @@ class Relaxation__Warren__Pbe(VaspWorkflow):
         NonConverging(),
         Potim(),
         PositiveEnergy(),
-#        Frozen(),
+        #        Frozen(),
         LargeSigma(),
         Walltime(),
     ]

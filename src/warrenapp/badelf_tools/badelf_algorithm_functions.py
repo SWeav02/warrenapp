@@ -675,9 +675,11 @@ def get_site_neighbor_results_fine(site_df, grid, lattice):
         # where it fails.
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         try:
-            elf_min_index_new, elf_min_value_new, elf_min_frac_new = get_line_frac_min_fine(
-                elf_positions, elf_min_index, grid
-            )
+            (
+                elf_min_index_new,
+                elf_min_value_new,
+                elf_min_frac_new,
+            ) = get_line_frac_min_fine(elf_positions, elf_min_index, grid)
         except:
             continue
         # convert minimum in ELF line into voxel position
@@ -724,7 +726,7 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
     for site_index, neighs in enumerate(neighbors26):
         # create df for each site
         site_df = pd.DataFrame(columns=columns)
-         # get voxel position from fractional site
+        # get voxel position from fractional site
         site_pos = get_voxel_from_frac(site_index, lattice)
         # site_pos_real = get_real_from_vox(site_pos, lattice)
         # iterate through each neighbor to the site
@@ -734,11 +736,11 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
             # mayenite.
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             try:
-                  site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
-                      site_index, neigh, lattice, site_pos, grid, rough_partitioning
-                  )
+                site_df.loc[len(site_df)] = get_site_neighbor_results_rough(
+                    site_index, neigh, lattice, site_pos, grid, rough_partitioning
+                )
             except:
-                  pass
+                pass
 
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # # This is an old algorithm that didn't incorporate the correct planes
@@ -758,63 +760,62 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
         # # # create a list to store the final set of neighbors
         important_neighs = pd.DataFrame(columns=columns)
         for [index, row] in site_df.iterrows():
-                        
-        #     # if the plane belongs to the set that is closest to the atom,
-        #     # automatically add this neighbor to the final set
-        #     if row["distance"] == plane_distances[0]:
-        #         important_neighs.loc[len(important_neighs)] = row
-        #     else:
-        #         # if the plane is not in this first set, check if any other planes
-        #         # intercept the line between it and the atom
-        #         point1 = row["plane_point"]
-        #         intercept = False
-        #         for [neigh_index, neigh_row] in site_df.iterrows():
-        #             if neigh_index != index:
-        #                 plane_point = neigh_row["plane_point"]
-        #                 plane_vector = neigh_row["plane_vector"]
-        #                 intersection = get_vector_plane_intersection(
-        #                     site_pos_real,
-        #                     point1,
-        #                     plane_point,
-        #                     plane_vector,
-        #                     allow_point_intercept=True,
-        #                 )
-        #                 # print(intersection)
-        #                 # if the line is not intersected, this plane is is part
-        #                 # of the partitioning set and we pass. Otherwise we
-        #                 # break and move on.
-        #                 if intersection is None:
-        #                     pass
-        #                 else:
-        #                     intercept = True
-        #                     break
-        #         if intercept == False:
-        #             important_neighs.loc[len(important_neighs)] = row
-                # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                # # This is a test algorithm to see if the same results are found
-                # # as when using an excessively large number of planes. It works
-                # # by checking if each plane point is underneath the other planes.
-                # # for a set of partitioning planes, all of these points should
-                # # be underneath any other potential partitioning plane
-                # under_planes = True
-                # # We need the plane point as a voxel because that's what the
-                # # sign function uses.
-                # min_point = row["elf_min_vox"]
-                # for [j, row1] in site_df.iterrows():
-                #     plane_point = row1["plane_point"]
-                #     plane_vector = row1["plane_vector"]
-                #     if j != index:
-                #         sign, distance = get_plane_sign(plane_point, plane_vector, min_point, lattice)
-                #         # print(sign)
-                #         if sign == "negative" or sign == "zero":
-                #             pass
-                #         else:
-                #             under_planes = False
-                #             break
-                # if under_planes == True:
-                #     important_neighs.loc[len(important_neighs)] = row
-                # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                important_neighs.loc[len(important_neighs)] = row
+            #     # if the plane belongs to the set that is closest to the atom,
+            #     # automatically add this neighbor to the final set
+            #     if row["distance"] == plane_distances[0]:
+            #         important_neighs.loc[len(important_neighs)] = row
+            #     else:
+            #         # if the plane is not in this first set, check if any other planes
+            #         # intercept the line between it and the atom
+            #         point1 = row["plane_point"]
+            #         intercept = False
+            #         for [neigh_index, neigh_row] in site_df.iterrows():
+            #             if neigh_index != index:
+            #                 plane_point = neigh_row["plane_point"]
+            #                 plane_vector = neigh_row["plane_vector"]
+            #                 intersection = get_vector_plane_intersection(
+            #                     site_pos_real,
+            #                     point1,
+            #                     plane_point,
+            #                     plane_vector,
+            #                     allow_point_intercept=True,
+            #                 )
+            #                 # print(intersection)
+            #                 # if the line is not intersected, this plane is is part
+            #                 # of the partitioning set and we pass. Otherwise we
+            #                 # break and move on.
+            #                 if intersection is None:
+            #                     pass
+            #                 else:
+            #                     intercept = True
+            #                     break
+            #         if intercept == False:
+            #             important_neighs.loc[len(important_neighs)] = row
+            # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # # This is a test algorithm to see if the same results are found
+            # # as when using an excessively large number of planes. It works
+            # # by checking if each plane point is underneath the other planes.
+            # # for a set of partitioning planes, all of these points should
+            # # be underneath any other potential partitioning plane
+            # under_planes = True
+            # # We need the plane point as a voxel because that's what the
+            # # sign function uses.
+            # min_point = row["elf_min_vox"]
+            # for [j, row1] in site_df.iterrows():
+            #     plane_point = row1["plane_point"]
+            #     plane_vector = row1["plane_vector"]
+            #     if j != index:
+            #         sign, distance = get_plane_sign(plane_point, plane_vector, min_point, lattice)
+            #         # print(sign)
+            #         if sign == "negative" or sign == "zero":
+            #             pass
+            #         else:
+            #             under_planes = False
+            #             break
+            # if under_planes == True:
+            #     important_neighs.loc[len(important_neighs)] = row
+            # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            important_neighs.loc[len(important_neighs)] = row
         rough_partition_results.append(important_neighs)
 
     if rough_partitioning:
@@ -853,7 +854,6 @@ def get_partitioning_rough(neighbors26, lattice, grid, rough_partitioning=False)
 def get_partitioning_fine(rough_partition_results, grid, lattice):
     results = {}
     for site_index, site_df in enumerate(rough_partition_results):
-        
         fine_site_df = get_site_neighbor_results_fine(site_df, grid, lattice)
         neigh_dict = {}
         for neigh_row in fine_site_df.iterrows():
@@ -1158,6 +1158,7 @@ def get_voxels_site_dask(
 #             return site
 #     return
 
+
 def get_matching_site_with_plane(vert_coord, results, lattice):
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # I've had a bug in the past where more than one site is found for a single
@@ -1243,7 +1244,8 @@ def get_matching_site_with_plane(vert_coord, results, lattice):
 #         return site, [t, u, v]
 #     else:
 #         return None
-    
+
+
 def get_vertex_site(
     x,
     y,
@@ -1282,8 +1284,8 @@ def get_vertex_site(
             break
         elif site is not None:
             sites.append(site)
-            translations.append([t,u,v])
-                # break
+            translations.append([t, u, v])
+            # break
     if len(sites) > 1:
         # if the length of sites is greater than 1 that means it found more than
         # one site at different transformations. I want to return -2 so I can
@@ -1479,7 +1481,7 @@ def get_site_volume_ratio(x, y, z, results, lattice, permutations, voxel_volume)
     site_vol_frac = {}
     for site in results.keys():
         site_vol_frac[site] = float(0)
-    
+
     # shorten the lists to unique sites/planes
     sites = vertices_sites.drop_duplicates(subset="site", ignore_index=True)
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1487,13 +1489,13 @@ def get_site_volume_ratio(x, y, z, results, lattice, permutations, voxel_volume)
     # it returns as -1. If multiple sites are found for one vertex but at multiple
     # transformed positions it returns -2.
     # My best guess for what is happening is that these sites are very close to
-    # being exactly on a plane and are therefore returning as being part of 
+    # being exactly on a plane and are therefore returning as being part of
     # more than one site.
-    # In my test with Na2S, returning these vertices as None and allowing the 
+    # In my test with Na2S, returning these vertices as None and allowing the
     # program to continue gave more even results.
     if -1 in sites["site"].to_list() or -2 in sites["site"].to_list():
         # print(f"multiple sites found for vertices at: {[x,y,z]}")
-        #If vertices are found to have multiple sites I've made it so that it
+        # If vertices are found to have multiple sites I've made it so that it
         # records his information as a new site in the site_vol_frac dictionary.
         # This should be searchable in post so that I can keep count of these
         # without stopping the algorithm
@@ -1511,9 +1513,9 @@ def get_site_volume_ratio(x, y, z, results, lattice, permutations, voxel_volume)
     except:
         most_common_site = None
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
+
     sites = sites.dropna(subset="site").reset_index()
-        
+
     # define the dataframe that we will store our plane information in
     intersections_df = pd.DataFrame(columns=["site", "neighbor", "intersections"])
 
@@ -1621,8 +1623,8 @@ def get_site_volume_ratio(x, y, z, results, lattice, permutations, voxel_volume)
         # if there are not intersections found, then something is broken
         if len(intersections_df) == 0:
             # site_vol_frac[most_common_site]=1.0
-        #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # I'm having this problem return as -3 so that I can keep track of it
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # I'm having this problem return as -3 so that I can keep track of it
             site_vol_frac[-3] = float(0)
             print(f"there's a problem assigning site: {vox_coord}")
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1773,11 +1775,11 @@ def get_voxels_site_multi_plane(
                 site_dict = near_plane_pdf.loc[index]["site"]
                 if site_dict is not None:
                     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    # I've made it so that there can be a site labeled -3, -2, 
+                    # I've made it so that there can be a site labeled -3, -2,
                     # or -1. I don't want these to be counted here so I'm
                     # skipping them
                     for site_index, frac in site_dict.items():
-                        if site_index in [-3,-2,-1]:
+                        if site_index in [-3, -2, -1]:
                             continue
                         else:
                             site_count[site_index] += frac
@@ -1792,6 +1794,7 @@ def get_voxels_site_multi_plane(
             site_frac[site_index] = site_count[site_index] / sum(site_count.values())
     return site_frac
 
+
 def get_voxels_site_nearest(
     x,
     y,
@@ -1805,23 +1808,20 @@ def get_voxels_site_nearest(
     # create lists to store site indices and distances
     sites = []
     distances = []
-    
+
     # get lists of atom coordinates and site numbers
     atom_coords = lattice["coords"]
     atom_site_indices = [i for i in range(len(atom_coords))]
-    
+
     for t, u, v in permutations:
         new_idx = [x + t, y + u, z + v]
         real_coord = get_real_from_vox(new_idx, lattice)
-        for site, coord in zip (atom_site_indices, atom_coords):
+        for site, coord in zip(atom_site_indices, atom_coords):
             dist = math.dist(real_coord, coord)
             sites.append(site)
             distances.append(dist)
-    
+
     # find the smallest distance
     min_dist = min(distances)
     # return the index associated with the smallest distance
     return sites[distances.index(min_dist)]
-            
-            
-            

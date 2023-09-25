@@ -1,25 +1,30 @@
 # -*- coding: utf-8 -*-
 
 
-from warrenapp.workflows.population_analysis.base import VaspBaderBadElfBase
-from warrenapp.workflows.population_analysis.bader_badelf import PopulationAnalysis__Warren__BaderBadelf
+import os
 from pathlib import Path
-from warrenapp.workflows.population_analysis.bader_badelf import PopulationAnalysis__Warren__BaderBadelf
+from shutil import make_archive, rmtree, unpack_archive
+
 from simmate.database import connect
 from simmate.database.workflow_results import StaticEnergy
-from shutil import unpack_archive, make_archive, rmtree
-import os
 from simmate.engine import Workflow
+
+from warrenapp.workflows.population_analysis.bader_badelf import (
+    PopulationAnalysis__Warren__BaderBadelf,
+)
+from warrenapp.workflows.population_analysis.base import VaspBaderBadElfBase
+
 
 class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
     use_database = False
+
     @staticmethod
     def run_config(
         structure,
         directory: Path,
         source: dict = None,
         **kwargs,
-            ):
+    ):
         static_directory = directory
         parent_directory = static_directory.parent.absolute()
         worker_directory = static_directory.parent.parent
@@ -27,7 +32,7 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
         # directory path is the same.
         # try to unzip the archive. If it fails stop the workflow
         try:
-            unpack_archive(f"{parent_directory}.zip",worker_directory)
+            unpack_archive(f"{parent_directory}.zip", worker_directory)
         except:
             breakpoint()
         elfcar_path = static_directory / "ELFCAR"
@@ -42,8 +47,8 @@ class PopulationAnalysis__Warren__BaderBadelfWrap(Workflow):
             structure=structure,
             directory=static_directory,
             find_empties=True,
-            source = None,
-            )
+            source=None,
+        )
         # re-zip the archive and remove the unzipped directory.
-        make_archive(f"{parent_directory}","zip")
+        make_archive(f"{parent_directory}", "zip")
         rmtree(parent_directory)

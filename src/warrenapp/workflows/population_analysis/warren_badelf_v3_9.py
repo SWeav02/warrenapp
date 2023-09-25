@@ -18,6 +18,7 @@ import pandas
 import pandas as pd
 import psutil
 from dask.distributed import Client, LocalCluster
+from pymatgen.io.vasp import Chgcar, Elfcar, Poscar
 from simmate.engine import Workflow
 from simmate.toolkit import Structure
 
@@ -34,13 +35,10 @@ from warrenapp.badelf_tools.badelf_algorithm_functions import (
     get_real_from_frac,
     get_voxels_site_dask,
     get_voxels_site_multi_plane,
-    get_voxels_site_volume_ratio_dask,
     get_voxels_site_nearest,
+    get_voxels_site_volume_ratio_dask,
 )
 from warrenapp.models import WarrenPopulationAnalysis
-from pymatgen.io.vasp import Elfcar
-from pymatgen.io.vasp import Poscar
-from pymatgen.io.vasp import Chgcar
 
 ###############################################################################
 # Now that we have functions defined, it's time to define the main workflow
@@ -285,7 +283,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             )
             # run site search and save as pandas dataframe
             pdf = ddf.compute()
-            
+
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # I've made it so that if a voxel is found to have multiple sites at
             # one transformation it will be stored as -1 in the pdf and if it is
@@ -295,8 +293,8 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             # need to sort these out and count them before I move on.
             # Count the number of instances where this occurs
             try:
-                multi_site_same_trans = pdf['site'].value_counts()[-1]
-                multi_site_trans = pdf['site'].value_counts()[-2]
+                multi_site_same_trans = pdf["site"].value_counts()[-1]
+                multi_site_trans = pdf["site"].value_counts()[-2]
             except:
                 multi_site_same_trans = 0
                 multi_site_trans = 0
@@ -307,7 +305,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             #         file.write(f"{np.prod(lattice['grid_size'])}\n{multi_site_same_trans}\n{multi_site_trans}")
             # Replace all instances with numpy nan object so that the rest of the
             # alg doesn't break.
-            pdf["site"].replace([-1,-2], np.nan, inplace=True)
+            pdf["site"].replace([-1, -2], np.nan, inplace=True)
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             # Group the results by site. Sum the charges and count the total number
@@ -325,7 +323,7 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             # nearby voxels to see which site is the most common and assign them to that
             # site. To do this we essentially repeat the previous several steps but with
             # the new site searching method.
-            
+
             # find where the site search returned None
             near_plane_index = np.where(pdf["site"].isnull())
             # We need to convert Nan in pdf to None type objects for when we are
@@ -357,12 +355,12 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
 
             # compute and return to pandas
             near_plane_pdf = near_plane_ddf.compute()
-        
+
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        #I've made it so that if some vertices are found multiple
-        #times, it adds an additional site labeled as -1 or -2. 
-        #This way I can count how many of them are doing this while still allowing
-        #them to be treated as not belonging to any site.
+        # I've made it so that if some vertices are found multiple
+        # times, it adds an additional site labeled as -1 or -2.
+        # This way I can count how many of them are doing this while still allowing
+        # them to be treated as not belonging to any site.
         vert_multi_site_same_trans = 0
         vert_multi_site = 0
         multi_site_no_plane = 0
@@ -384,7 +382,9 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 if print_atom_voxels:
                     sites = row[1][4]
                     max_site_frac = max(sites.values())
-                    max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
+                    max_site = list(sites.keys())[
+                        list(sites.values()).index(max_site_frac)
+                    ]
                     all_charge_coords.loc[row[0], "site"] = max_site
             except:
                 if row[1][4] is not None:
@@ -423,36 +423,42 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                     try:
                         sites = row[1][4]
                         max_site_frac = max(sites.values())
-                        max_site = list(sites.keys())[list(sites.values()).index(max_site_frac)]
+                        max_site = list(sites.keys())[
+                            list(sites.values()).index(max_site_frac)
+                        ]
                         all_charge_coords.loc[row[0], "site"] = max_site
                     except:
                         continue
         else:
             print("no voxels intercepted by more than one plane")
-        
+
         # After all other parts have run, sometimes the algorithm still has some
         # voxels that are unassigned. The easiest way to handle these is to give
         # them to the closest atom.
         # get dataframe of all missing voxels
         missing_voxel_index = np.where(multi_plane_pdf["sites"] == {})
         multi_plane_pdf = multi_plane_pdf.replace({np.nan: None})
-        missing_voxel_pdf = multi_plane_pdf.iloc[missing_voxel_index].drop(columns=["sites"])
+        missing_voxel_pdf = multi_plane_pdf.iloc[missing_voxel_index].drop(
+            columns=["sites"]
+        )
         if len(missing_voxel_pdf) > 0:
-            perc_voxels = (len(missing_voxel_pdf)/np.prod(lattice["grid_size"]))*100
-            print(f"""{perc_voxels}% of voxels could not be assigned by base
+            perc_voxels = (len(missing_voxel_pdf) / np.prod(lattice["grid_size"])) * 100
+            print(
+                f"""{perc_voxels}% of voxels could not be assigned by base
             algorithm. Remaining voxels will be assigned by closest atom
-                  """)
-            
+                  """
+            )
+
             missing_voxel_pdf["sites"] = missing_voxel_pdf.apply(
                 lambda x: get_voxels_site_nearest(
-                    x["x"], 
-                    x["y"], 
-                    x["z"], 
-                    permutations=permutations, 
+                    x["x"],
+                    x["y"],
+                    x["z"],
+                    permutations=permutations,
                     lattice=lattice,
-                    ),
-                axis = 1,
-                )
+                ),
+                axis=1,
+            )
             # Group the results by site. Sum the charges and count the total number
             # of voxels for each site. Apply charges and volumes to dictionaries.
             missing_voxel_pdf_grouped = missing_voxel_pdf.groupby(by="sites")
@@ -461,22 +467,23 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
             for site in results_charge:
                 if site in missing_voxel_pdf_grouped_charge.index.to_list():
                     results_charge[site] += missing_voxel_pdf_grouped_charge[site]
-                    results_volume[site] += missing_voxel_pdf_grouped_voxels[site] * voxel_volume
-            
+                    results_volume[site] += (
+                        missing_voxel_pdf_grouped_voxels[site] * voxel_volume
+                    )
+
             if print_atom_voxels:
                 for row in missing_voxel_pdf.iterrows():
                     site = row[1]["sites"]
                     all_charge_coords.loc[row[0], "site"] = site
         else:
             print("All voxels assigned.")
-        
+
         # divide charge by volume to get true charge
         # this is a vasp convention
         for site, charge in results_charge.items():
             results_charge[site] = charge / (a * b * c)
         total_charge = sum(results_charge.values())
-        
-        
+
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Now I need to save the number of problem voxels in a report document.
         # I think it would be most useful to do this in a csv style format so
@@ -491,19 +498,21 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
         # the sites, and may be normal for the vertices if they are split by a
         # plane.
         with open(directory / "same_site_voxel_count.txt", "w") as file:
-            file.write(f"{structure.formula},{structure.get_space_group_info()[0]},{str(directory.absolute())},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}")
+            file.write(
+                f"{structure.formula},{structure.get_space_group_info()[0]},{str(directory.absolute())},{np.prod(lattice['grid_size'])},{multi_site_same_trans},{multi_site_trans},{vert_multi_site_same_trans},{vert_multi_site},{multi_site_no_plane}"
+            )
         #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        
+
         #######################################################################
         # Print atom voxels
         #######################################################################
         if print_atom_voxels:
             # get poscar object
             try:
-                poscar = Poscar(Structure.from_file(directory/"POSCAR_empty"))
+                poscar = Poscar(Structure.from_file(directory / "POSCAR_empty"))
             except:
                 poscar = Poscar(structure)
-                
+
             # iterate over each element in the empty lattice
             for element in empty_lattice["elements"]:
                 # get list of site indices for each type of atom
@@ -518,12 +527,12 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 # to numpy arrays
                 for row in all_charge_coords.iterrows():
                     if row[1]["site"] in site_indices:
-                        x = int(row[1]["x"]-1)
-                        y = int(row[1]["y"]-1)
-                        z = int(row[1]["z"]-1)
+                        x = int(row[1]["x"] - 1)
+                        y = int(row[1]["y"] - 1)
+                        z = int(row[1]["z"] - 1)
                         chgcar_data[x][y][z] = row[1]["chg"]
                         elfcar_data[x][y][z] = grid[x][y][z]
-                
+
                 # create elfcar and chgcar objects and write to file
                 chgcar_data = {"diff": chgcar_data, "total": chgcar_data}
                 elfcar_data = {"diff": elfcar_data, "total": elfcar_data}

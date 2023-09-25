@@ -94,6 +94,7 @@ class PopulationAnalysis__Warren__BadelfInit(S3Workflow):
     required_files = ["CHGCAR", "ELFCAR"]
     use_database = False
 
+
 # Workflow for running a BadELF analysis that uses the original gradient method
 # described by Bader and utilized by Savin et al. Run assuming dummy atoms have
 # been placed
@@ -102,9 +103,11 @@ class PopulationAnalysis__Warren__BadelfGradientEmpty(S3Workflow):
     Runs Bader analysis where the ELFCAR is used as the partitioning reference
     instead of CHGCAR.
     """
+
     command = "bader CHGCAR_empty -ref ELFCAR_empty > bader.out"
     required_files = ["CHGCAR_empty", "ELFCAR_empty"]
     database_table = WarrenPopulationAnalysis
+
 
 # Same as above, but not assuming dummy atoms have been placed.
 class PopulationAnalysis__Warren__BadelfGradient(S3Workflow):
@@ -112,9 +115,11 @@ class PopulationAnalysis__Warren__BadelfGradient(S3Workflow):
     Runs Bader analysis where the ELFCAR is used as the partitioning reference
     instead of CHGCAR.
     """
+
     command = "bader CHGCAR -ref ELFCAR > bader.out"
     required_files = ["CHGCAR", "ELFCAR"]
     database_table = WarrenPopulationAnalysis
+
 
 # Workflow for running the henkelman groups algorithm and
 # generating chgcar like files for each atom.
@@ -277,9 +282,11 @@ class VaspBadElfBase(Workflow):
                     directory=directory,
                 )
             else:
-                print("""The badelf_alg setting you chose does not exist. Please select
+                print(
+                    """The badelf_alg setting you chose does not exist. Please select
                       either 'voronoi' or 'gradient'.
-                      """)
+                      """
+                )
         else:
             if cls.static_energy_prebadelf is not None:
                 prebadelf_result = cls.static_energy_prebadelf.run(
@@ -294,7 +301,7 @@ class VaspBadElfBase(Workflow):
             # directory in the future though.
             # We don't need to generate empty atom files because we're not looking
             # for electride sites here.
-            if badelf_alg == "voronoi": 
+            if badelf_alg == "voronoi":
                 PopulationAnalysis__Warren__BadelfIonicRadii.run(
                     directory=directory,
                     empty_structure_file="POSCAR",
@@ -306,9 +313,12 @@ class VaspBadElfBase(Workflow):
                     directory=directory,
                 )
             else:
-                print("""The badelf_alg setting you chose does not exist. Please select
+                print(
+                    """The badelf_alg setting you chose does not exist. Please select
                       either 'voronoi' or 'gradient'.
-                      """)
+                      """
+                )
+
 
 class VaspBaderBadElfBase(Workflow):
     """
@@ -375,9 +385,11 @@ class VaspBaderBadElfBase(Workflow):
                     directory=directory,
                 )
             else:
-                print("""The badelf_alg setting you chose does not exist. Please select
+                print(
+                    """The badelf_alg setting you chose does not exist. Please select
                       either 'voronoi' or 'gradient'.
-                      """)
+                      """
+                )
             # Create directories for badelf and bader results so that they
             # don't get overwritten
             try:
@@ -414,7 +426,7 @@ class VaspBaderBadElfBase(Workflow):
                 directory=directory,
             ).result()
             if badelf_alg == "voronoi":
-            # Run badelf on initial output
+                # Run badelf on initial output
                 PopulationAnalysis__Warren__BadelfIonicRadii.run(
                     directory=directory,
                     empty_structure_file="POSCAR",
@@ -427,9 +439,11 @@ class VaspBaderBadElfBase(Workflow):
                     directory=directory,
                 )
             else:
-                print("""The badelf_alg setting you chose does not exist. Please select
+                print(
+                    """The badelf_alg setting you chose does not exist. Please select
                       either 'voronoi' or 'gradient'.
-                      """)
+                      """
+                )
             # Create directories for badelf and bader results
             try:
                 Path(directory / "badelf").mkdir()
