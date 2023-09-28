@@ -249,6 +249,7 @@ class VaspBadElfBase(Workflow):
         directory: Path = None,
         min_charge: float = 0.15,
         badelf_alg: str = "voronoi",
+        print_atom_voxels = False,
         **kwargs,
     ):
         if find_empties:
@@ -276,6 +277,7 @@ class VaspBadElfBase(Workflow):
                 # Run Warren lab version of BadELF algorithm
                 PopulationAnalysis__Warren__BadelfIonicRadii.run(
                     directory=directory,
+                    print_atom_voxels=print_atom_voxels,
                 )
             elif badelf_alg == "gradient":
                 PopulationAnalysis__Warren__BadelfGradientEmpty.run(
@@ -307,6 +309,7 @@ class VaspBadElfBase(Workflow):
                     empty_structure_file="POSCAR",
                     partition_file="ELFCAR",
                     charge_file="CHGCAR",
+                    print_atom_voxels=print_atom_voxels,
                 ).result()
             elif badelf_alg == "gradient":
                 PopulationAnalysis__Warren__BadelfGradient.run(
@@ -341,6 +344,7 @@ class VaspBaderBadElfBase(Workflow):
         directory: Path = None,
         min_charge: float = 0.15,
         badelf_alg: str = "voronoi",
+        print_atom_voxels = False,
         **kwargs,
     ):
         # Define files that will be copied into badelf and bader subdirectories
@@ -378,7 +382,7 @@ class VaspBaderBadElfBase(Workflow):
             ).result()
             if badelf_alg == "voronoi":
                 # Run Warren lab BadELF algorithm
-                PopulationAnalysis__Warren__BadelfIonicRadii.run(directory=directory)
+                PopulationAnalysis__Warren__BadelfIonicRadii.run(directory=directory, print_atom_voxels=print_atom_voxels)
             elif badelf_alg == "gradient":
                 # Run bader version of BadELF algorithm
                 PopulationAnalysis__Warren__BadelfGradientEmpty.run(
@@ -429,6 +433,7 @@ class VaspBaderBadElfBase(Workflow):
                 # Run badelf on initial output
                 PopulationAnalysis__Warren__BadelfIonicRadii.run(
                     directory=directory,
+                    print_atom_voxels=print_atom_voxels,
                     empty_structure_file="POSCAR",
                     partition_file="ELFCAR",
                     charge_file="CHGCAR",
