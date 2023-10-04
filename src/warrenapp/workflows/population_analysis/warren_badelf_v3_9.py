@@ -538,8 +538,8 @@ class PopulationAnalysis__Warren__BadelfIonicRadii(Workflow):
                 elfcar_data = {"diff": elfcar_data, "total": elfcar_data}
                 chgcar = Chgcar(poscar, chgcar_data)
                 elfcar = Elfcar(poscar, elfcar_data)
-                chgcar.write_file(f"CHGCAR_{element}")
-                elfcar.write_file(f"ELFCAR_{element}")
+                chgcar.write_file(directory / f"CHGCAR_{element}")
+                elfcar.write_file(directory / f"ELFCAR_{element}")
         ###############################################################################
         # Save information into ACF.dat like file
         ###############################################################################
