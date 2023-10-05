@@ -14,10 +14,10 @@ import numpy as np
 import pandas as pd
 from numpy import polyfit
 from pymatgen.analysis.local_env import CrystalNN
+from pymatgen.io.vasp import Elfcar
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial import ConvexHull
 from simmate.toolkit import Structure
-from pymatgen.io.vasp import Elfcar
 
 ###############################################################################
 # This module defines functions that are used in the warren lab badelf
@@ -188,7 +188,7 @@ def get_lattice(partition_file: str):
                 break
     return lattice
 
-  
+
 def get_closest_neighbors(structure: Structure):
     """
     Function for getting the closest neighbors
@@ -365,6 +365,7 @@ def get_partitioning_line_rough(site_pos, neigh_pos, grid):
         values.append(value)
     return line, values
 
+
 def get_partitioning_line_fine(site_pos, neigh_pos, grid):
     """
     Finds a line of voxel positions between two atom sites and then finds the value
@@ -411,6 +412,7 @@ def get_partitioning_line_fine(site_pos, neigh_pos, grid):
         value = float(fn(new_pos))
         values.append(value)
     return line, values
+
 
 def get_line_frac_min_rough(values, rough_partitioning=False):
     """
