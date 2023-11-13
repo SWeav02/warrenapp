@@ -8,14 +8,14 @@ Welcome to the Warren Lab's extension app for
 </p>
 
 ### Requirements
-This extension is built off of [Simmate](https://github.com/jacksund/simmate). In order to use it you must have the base Simmate package installed.
+This extension is built off of [Simmate](https://github.com/jacksund/simmate). In order to use it you must have the base Simmate package installed. The current version is built on top of Simmate 0.13.2 and does not work with the most up-to-date version of Simmate. We are working to fix this in the next couple of weeks.
 
 Tutorials are at: https://jacksund.github.io/simmate/getting_started/overview/
 
 ### How to Install
 1. If you don't already have Simmate installed, follow the instructions to [install Simmate](https://jacksund.github.io/simmate/getting_started/installation/quick_start/)
 ``` shell
-conda create -n my_env -c conda-forge python=3.11 simmate
+conda create -n my_env -c conda-forge python=3.11 simmate=0.13.2
 conda activate my_env
 simmate database reset
 ```
