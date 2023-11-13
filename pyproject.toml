@@ -20,7 +20,7 @@ build-backend= "setuptools.build_meta"
 [project]
 name = "warrenapp"
 version = "0.2.0"
-dependencies = ["simmate"]
+dependencies = ["simmate=0.13.2"]
 description = "The Warrenapp is an extension of the Simulated Materials Ecosystem (Simmate), a package designed to ease computational materials research. The WarrenApp adds several custom workflows and settings."
 readme = "README.md"
 requires-python=">=3.10"
