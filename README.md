@@ -26,8 +26,8 @@ git clone https://github.com/SWeav02/simmate.git
 3. Navigate to the Simmate folder that was cloned from github and install it locally. Then create a Simmate database.
 ```shell
 cd Simmate
-pip install .
-simmate database reset
+pip install -e .
+simmate database reset --confirm-delete --no-use-prebuilt
 ```
 4. While we work to incorporate the warrenapp into simmate, we've chosen not to register the WarrenApp with Django, the package that Simmate uses to manage the database under the hood. Register the warrenapp by adding `- simmate.apps.configs.WarrenConfig` to ~/Home/simmate/my_env-apps.yaml.
 5. Update your database to include custom tables from the warrenapp
