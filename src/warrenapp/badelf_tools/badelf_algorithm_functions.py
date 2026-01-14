@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 from numpy import polyfit
 from pymatgen.analysis.local_env import CrystalNN
+from pymatgen.io.vasp import Elfcar
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial import ConvexHull
 from simmate.toolkit import Structure
@@ -79,8 +80,8 @@ def get_voxel_from_neigh_CrystalNN(neigh, lattice):
 
 def get_voxel_from_neigh(neigh, lattice):
     """
-    Gets the voxel coordinate from a neighbor atom object from CrystalNN or
-    VoronoiNN
+    Gets the voxel coordinate from a neighbor atom object from closest neighbor
+    method
     """
     grid_size = lattice["grid_size"]
     frac = neigh.frac_coords
@@ -361,6 +362,54 @@ def get_partitioning_line_rough(site_pos, neigh_pos, grid):
     for pos in line:
         adjusted_pos = [x for x in pos]
         value = float(fn(adjusted_pos))
+        values.append(value)
+    return line, values
+
+
+def get_partitioning_line_fine(site_pos, neigh_pos, grid):
+    """
+    Finds a line of voxel positions between two atom sites and then finds the value
+    of the partitioning grid at each of these positions. The values are found
+    using an interpolation function defined using SciPy's RegularGridInterpeter
+    using the 'cubic' method.
+    """
+    steps = 200
+    slope = [b - a for a, b in zip(site_pos, neigh_pos)]
+    slope_increment = [float(x) / steps for x in slope]
+
+    # get a list of points along the connecting line
+    position = site_pos
+    line = [position]
+    for i in range(steps):
+        # move position by slope_increment
+        position = [float(a + b) for a, b in zip(position, slope_increment)]
+
+        # Wrap values back into cell
+        # We must do (a-1) to shift the voxel index (1 to grid_max+1) onto a
+        # normal grid, (0 to grid_max), then do the wrapping function (%), then
+        # shift back onto the VASP voxel index.
+        position = [
+            round((float(((a - 1) % b) + 1)), 12) for a, b in zip(position, grid.shape)
+        ]
+
+        line.append(position)
+
+    # The partitioning uses a padded grid and grid interpolation to find the
+    # location of dividing planes.
+    padded = np.pad(grid, 10, mode="wrap")
+
+    # interpolate grid to find values that lie between voxels. This is done
+    # with a cruder interpolation here and then the area close to the minimum
+    # is examened more closely with a more rigorous interpolation in
+    # get_line_frac_min
+    a, b, c = get_grid_axes_large_pad(grid, 10)
+    fn = RegularGridInterpolator((a, b, c), padded, method="cubic")
+    # get a list of the ELF values along the line
+    values = []
+
+    for pos in line:
+        new_pos = [i + 9 for i in pos]
+        value = float(fn(new_pos))
         values.append(value)
     return line, values
 
